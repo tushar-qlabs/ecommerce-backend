@@ -40,23 +40,8 @@ public class JwtService {
         CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
         User user = customUserDetails.user();
 
-        List<String> roles = user.getRoles().stream()
-                .map(Role::getName)
-                .toList();
-
-        List<String> permissions = Stream.concat(
-                        user.getRoles().stream()
-                                .flatMap(role -> role.getPermissions().stream()),
-                        user.getPermissions().stream()
-                )
-                .map(Permission::getName)
-                .distinct()
-                .toList();
-
         extraClaims.put("userId", user.getId());
         extraClaims.put("firstName", user.getFirstName());
-        extraClaims.put("roles", roles);
-        extraClaims.put("permissions", permissions);
 
         return Jwts.builder()
                 .claims(extraClaims)

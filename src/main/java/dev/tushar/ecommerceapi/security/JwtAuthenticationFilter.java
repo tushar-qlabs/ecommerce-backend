@@ -46,29 +46,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         userEmail = jwtService.extractUsername(jwt);
 
-        try {
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            jwtService.extractRolesAndPermissions(jwt).stream()
-                                    .map(SimpleGrantedAuthority::new)
-                                    .collect(Collectors.toSet())
+        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            if (jwtService.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
 
-                            // Instead of calling getAuthorities() on userDetails, to fetch roles
-                            // and permissions for user on every request, we simply extract the
-                            // stored roles and permissions from the JWT.
-                    );
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+                // This line stores the extra information related to user like ip, browser.
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                // This line is where we store all the roles and permissions of the user
+                // for the current request
+                // It is used internally by @PreAuthorize and @PostAuthorize annotations
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
-        } catch (JwtException e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            // I have to handle this exception from securityChain using
-            // .exceptionHandling() and AuthenticationEntryPoint.
         }
         filterChain.doFilter(request, response);
     }
