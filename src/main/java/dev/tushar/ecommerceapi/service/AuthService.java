@@ -87,8 +87,6 @@ public class AuthService {
                         user.getId(),
                         user.getFirstName(),
                         user.getEmail(),
-                        user.getPermissions().stream().map(Permission::getName).toArray(String[]::new),
-                        user.getRoles().stream().map(Role::getName).toArray(String[]::new),
                         new HashMap<>(
                                 Map.of(
                                         "token", jwtToken
