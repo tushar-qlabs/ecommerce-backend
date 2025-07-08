@@ -1,11 +1,10 @@
 package dev.tushar.ecommerceapi.service;
 
+import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.AuthenticationRequest;
 import dev.tushar.ecommerceapi.dto.request.RegisterRequest;
 import dev.tushar.ecommerceapi.dto.response.AuthResponse;
 import dev.tushar.ecommerceapi.dto.response.RegisterResponse;
-import dev.tushar.ecommerceapi.dto.ApiResponse;
-import dev.tushar.ecommerceapi.entity.Permission;
 import dev.tushar.ecommerceapi.entity.Role;
 import dev.tushar.ecommerceapi.entity.User;
 import dev.tushar.ecommerceapi.exception.EmailOrPhoneAlreadyExistsException;
@@ -13,6 +12,7 @@ import dev.tushar.ecommerceapi.exception.UserNotFoundException;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
+import dev.tushar.ecommerceapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final JwtService jwtService;
+    private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -79,7 +79,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(request.getEmail()));
 
-        String jwtToken = jwtService.generateToken(new CustomUserDetails(user));
+        String jwtToken = jwtUtil.generateToken(new CustomUserDetails(user));
 
         return ApiResponse.success(
                 "Login successful.",
