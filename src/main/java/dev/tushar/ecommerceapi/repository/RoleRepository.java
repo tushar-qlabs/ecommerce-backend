@@ -10,8 +10,5 @@ import java.util.Set;
 
 
 public interface RoleRepository extends JpaRepository<Role, Integer> {
-    @Query("SELECT p FROM Role r JOIN r.permissions p WHERE r.name = :name")
-    Set<Permission> findPermissionsByRoleName(String name);
-
     Optional<Role> findByName(String name);
 }

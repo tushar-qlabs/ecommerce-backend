@@ -1,10 +1,11 @@
 package dev.tushar.ecommerceapi.config;
 
+//import dev.tushar.ecommerceapi.filter.RequestLoggingFilter;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomAuthenticationEntryPoint;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.security.JwtAuthenticationFilter;
-import dev.tushar.ecommerceapi.service.JwtService;
+import dev.tushar.ecommerceapi.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +27,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtService jwtService;
+    private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
@@ -49,19 +50,19 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtService, userDetailsService());
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsService());
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+//                .addFilterBefore(new RequestLoggingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/v1/demo/public/**").permitAll()
+                        .requestMatchers("/auth/**", "/demo/public").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

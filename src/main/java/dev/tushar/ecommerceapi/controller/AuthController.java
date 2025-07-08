@@ -4,8 +4,8 @@ import dev.tushar.ecommerceapi.dto.request.AuthenticationRequest;
 import dev.tushar.ecommerceapi.dto.request.RegisterRequest;
 import dev.tushar.ecommerceapi.dto.response.AuthResponse;
 import dev.tushar.ecommerceapi.dto.response.RegisterResponse;
-import dev.tushar.ecommerceapi.service.AuthService;
 import dev.tushar.ecommerceapi.dto.ApiResponse;
+import dev.tushar.ecommerceapi.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -28,7 +28,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.register(request));
     }
 
-    @PostMapping("/authenticate")
+    @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> authenticate(
             @RequestBody @Valid AuthenticationRequest request
     ) {
