@@ -6,8 +6,7 @@ import dev.tushar.ecommerceapi.dto.response.BusinessResponseDTO;
 import dev.tushar.ecommerceapi.entity.Business;
 import dev.tushar.ecommerceapi.entity.Role;
 import dev.tushar.ecommerceapi.entity.User;
-import dev.tushar.ecommerceapi.exception.BusinessAlreadyExistException;
-import dev.tushar.ecommerceapi.exception.ResourceNotFoundException;
+import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.model.VerificationStatus;
 import dev.tushar.ecommerceapi.repository.BusinessRepository;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
@@ -20,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +36,10 @@ public class BusinessServiceImpl implements BusinessService {
         User user = currentUser.user();
 
         if (businessRepository.existsByUserId(user.getId())) {
-            throw new BusinessAlreadyExistException("User already has a registered business.");
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "This account already has a registered business."
+            );
         }
 
         Business business = Business.builder()
@@ -55,7 +57,10 @@ public class BusinessServiceImpl implements BusinessService {
     public ApiResponse<BusinessResponseDTO> getMyBusiness(CustomUserDetails currentUser) {
         User user = currentUser.user();
         Business business = businessRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("No business found for the current user."));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "No business has been registered for this account."
+                ));
         return ApiResponse.success("Business details fetched successfully.", mapToBusinessResponseDTO(business), HttpStatus.OK.value());
     }
 
@@ -70,7 +75,10 @@ public class BusinessServiceImpl implements BusinessService {
     @Override
     public ApiResponse<BusinessResponseDTO> getBusinessById(Long businessId) {
         Business business = businessRepository.findById(businessId)
-                .orElseThrow(() -> new ResourceNotFoundException("Business not found with ID: " + businessId));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "A business with ID " + businessId + " could not be found."
+                ));
         return ApiResponse.success("Business details fetched successfully.", mapToBusinessResponseDTO(business), HttpStatus.OK.value());
     }
 
@@ -81,11 +89,18 @@ public class BusinessServiceImpl implements BusinessService {
         try {
             statusEnum = VerificationStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid status value: " + status);
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    "The provided status value is invalid.",
+                    Map.of("invalidStatus", status, "allowedValues", "[VERIFIED, REJECTED, PENDING]")
+            );
         }
 
         Business business = businessRepository.findById(businessId)
-                .orElseThrow(() -> new ResourceNotFoundException("Business not found with ID: " + businessId));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "A business with ID " + businessId + " could not be found."
+                ));
 
         business.setVerificationStatus(statusEnum.name());
         Business savedBusiness = businessRepository.save(business);
@@ -93,11 +108,17 @@ public class BusinessServiceImpl implements BusinessService {
         if (statusEnum == VerificationStatus.VERIFIED) {
             User user = savedBusiness.getUser();
             if (user == null) {
-                throw new ResourceNotFoundException("User associated with this business not found.");
+                throw new ApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Data integrity error: Business with ID " + businessId + " has no associated user."
+                );
             }
 
             Role sellerRole = roleRepository.findByName("SELLER")
-                    .orElseThrow(() -> new ResourceNotFoundException("SELLER: Role not found."));
+                    .orElseThrow(() -> new ApiException(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Server configuration error: The 'SELLER' role is missing."
+                    ));
 
             if (user.getRoles().stream().noneMatch(role -> role.getName().equals("SELLER"))) {
                 user.getRoles().add(sellerRole);
