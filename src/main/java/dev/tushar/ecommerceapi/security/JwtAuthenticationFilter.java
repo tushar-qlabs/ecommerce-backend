@@ -59,6 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // for the current request
                 // It is used internally by @PreAuthorize and @PostAuthorize annotations
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("Authenticated user: " + userEmail);
             }
         }
         filterChain.doFilter(request, response);

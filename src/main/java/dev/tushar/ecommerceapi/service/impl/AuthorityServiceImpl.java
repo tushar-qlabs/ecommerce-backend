@@ -10,7 +10,7 @@ import dev.tushar.ecommerceapi.dto.response.UserAuthorityDetailsResponseDTO;
 import dev.tushar.ecommerceapi.entity.Permission;
 import dev.tushar.ecommerceapi.entity.Role;
 import dev.tushar.ecommerceapi.entity.User;
-import dev.tushar.ecommerceapi.exception.ResourceNotFoundException;
+import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.repository.PermissionRepository;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
@@ -44,7 +44,10 @@ public class AuthorityServiceImpl implements AuthorityService {
 
     @Override
     public ApiResponse<RoleResponseDTO> getRoleById(Integer roleId) {
-        Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+        Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ApiException(
+                HttpStatus.NOT_FOUND,
+                "A role with the provided ID could not be found."
+        ));
         return ApiResponse.success("Role fetched successfully", mapToRoleResponseDTO(role), HttpStatus.OK.value());
     }
 
@@ -61,7 +64,10 @@ public class AuthorityServiceImpl implements AuthorityService {
 
     @Override
     public ApiResponse<RoleResponseDTO> updateRole(Integer roleId, RoleRequestDTO roleRequest) {
-        Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+        Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ApiException(
+                HttpStatus.NOT_FOUND,
+                "A role with the provided ID could not be found."
+        ));
         Set<Permission> permissions = getPermissionsFromIds(roleRequest.getPermissionIds());
         role.setName(roleRequest.getName().toUpperCase());
         role.setPermissions(permissions);
@@ -71,7 +77,10 @@ public class AuthorityServiceImpl implements AuthorityService {
 
     @Override
     public ApiResponse<Void> deleteRole(Integer roleId) {
-        Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+        Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ApiException(
+                HttpStatus.NOT_FOUND,
+                "A role with the provided ID could not be found."
+        ));
         roleRepository.delete(role);
         return ApiResponse.success("Role deleted successfully", null, HttpStatus.OK.value());
     }
@@ -86,18 +95,27 @@ public class AuthorityServiceImpl implements AuthorityService {
 
     @Override
     public ApiResponse<PermissionResponseDTO> getPermissionById(Integer permissionId) {
-        Permission permission = permissionRepository.findById(permissionId.longValue()).orElseThrow(() -> new ResourceNotFoundException("Permission not found"));
+        Permission permission = permissionRepository.findById(permissionId.longValue()).orElseThrow(() -> new ApiException(
+                HttpStatus.NOT_FOUND,
+                "A permission with the provided ID could not be found."
+        ));
         return ApiResponse.success("Permission fetched successfully", new PermissionResponseDTO(permission.getId(), permission.getName()), HttpStatus.OK.value());
     }
 
     @Override
     public ApiResponse<Void> updateUserRoles(Long userId, UpdateUserRolesRequestDTO request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "A user with the provided ID could not be found."
+                ));
 
         Set<Role> newRoles = request.roleIds().stream()
                 .map(roleId -> roleRepository.findById(roleId.longValue())
-                        .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId)))
+                        .orElseThrow(() -> new ApiException(
+                                HttpStatus.NOT_FOUND,
+                                "A role with the provided ID could not be found."
+                        )))
                 .collect(Collectors.toSet());
 
         user.setRoles(newRoles);
@@ -109,11 +127,17 @@ public class AuthorityServiceImpl implements AuthorityService {
     @Override
     public ApiResponse<Void> updateUserPermissions(Long userId, UpdateUserPermissionsRequestDTO request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "A user with the provided ID could not be found."
+                ));
 
         Set<Permission> newPermissions = request.permissionIds().stream()
                 .map(permissionId -> permissionRepository.findById(permissionId.longValue())
-                        .orElseThrow(() -> new ResourceNotFoundException("Permission not found with ID: " + permissionId)))
+                        .orElseThrow(() -> new ApiException(
+                                HttpStatus.NOT_FOUND,
+                                "A permission with the provided ID could not be found."
+                        )))
                 .collect(Collectors.toSet());
 
         user.setPermissions(newPermissions);
@@ -132,7 +156,10 @@ public class AuthorityServiceImpl implements AuthorityService {
     @Override
     public ApiResponse<UserAuthorityDetailsResponseDTO> getUserAuthorities(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "A user with the provided ID could not be found."
+                ));
         UserAuthorityDetailsResponseDTO authorities = buildUserAuthorityDetails(user);
         return ApiResponse.success("Authorities for user " + userId + " fetched successfully", authorities, HttpStatus.OK.value());
     }
@@ -158,7 +185,10 @@ public class AuthorityServiceImpl implements AuthorityService {
     private Set<Permission> getPermissionsFromIds(Set<Integer> permissionIds) {
         return permissionIds.stream()
                 .map(id -> permissionRepository.findById(id.longValue())
-                        .orElseThrow(() -> new ResourceNotFoundException("Permission not found with ID: " + id)))
+                        .orElseThrow(() -> new ApiException(
+                                HttpStatus.NOT_FOUND,
+                                "A permission with the provided ID could not be found."
+                        )))
                 .collect(Collectors.toSet());
     }
 

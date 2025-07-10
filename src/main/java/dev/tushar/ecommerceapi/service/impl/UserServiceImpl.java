@@ -6,13 +6,13 @@ import dev.tushar.ecommerceapi.dto.response.AddressResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.UserResponseDTO;
 import dev.tushar.ecommerceapi.entity.Address;
 import dev.tushar.ecommerceapi.entity.User;
-import dev.tushar.ecommerceapi.exception.ResourceNotFoundException;
-import dev.tushar.ecommerceapi.exception.UserNotFoundException;
+import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.repository.AddressRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +37,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDTO getUserById(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "A user with ID " + userId + " could not be found."
+                ));
         return new UserResponseDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhoneNumber());
     }
 
@@ -113,7 +116,10 @@ public class UserServiceImpl implements UserService {
 
     private Address getOwnedAddress(CustomUserDetails currentUser, Long addressId) {
         Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "The requested address could not be found."
+                ));
         if (!address.getUser().getId().equals(currentUser.user().getId())) {
             throw new AccessDeniedException("You do not have permission to access this address.");
         }
