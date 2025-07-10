@@ -1,4 +1,4 @@
-package dev.tushar.ecommerceapi.service;
+package dev.tushar.ecommerceapi.service.impl;
 
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.RoleRequestDTO;
@@ -15,6 +15,7 @@ import dev.tushar.ecommerceapi.repository.PermissionRepository;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
+import dev.tushar.ecommerceapi.service.AuthorityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

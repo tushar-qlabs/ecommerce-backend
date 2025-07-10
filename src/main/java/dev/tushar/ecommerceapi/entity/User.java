@@ -69,12 +69,9 @@ public class User {
 
 }
 
-
 /*
     mappedBy points to the field in the other entity that owns the relationship —
     specifically, the one that holds the foreign key column in the database.
-
-    --
 
     In ManyToMany relationship, owner side is the one who have @JoinTable annotation,
     means the one who is responsible for creating the join table and the relationship is defined

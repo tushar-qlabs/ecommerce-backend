@@ -2,6 +2,7 @@ package dev.tushar.ecommerceapi.controller;
 
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.BusinessRegistrationRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.ValidateBusinessRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.BusinessResponseDTO;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.service.BusinessService;
@@ -26,29 +27,46 @@ public class BusinessController {
     public ResponseEntity<ApiResponse<BusinessResponseDTO>> registerBusiness(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @Valid @RequestBody BusinessRegistrationRequestDTO request) {
-        ApiResponse<BusinessResponseDTO> response = businessService.registerBusiness(currentUser, request);
-        return ResponseEntity.status(response.getCode()).body(response);
+        return ResponseEntity.ok(
+                businessService.registerBusiness(currentUser, request)
+        );
     }
 
     @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()") // It should be fundamental right, for everyone to read their own details.
+    @PreAuthorize("isAuthenticated()") // Authenticated users can access their own business profile
     public ResponseEntity<ApiResponse<BusinessResponseDTO>> getMyBusiness(
             @AuthenticationPrincipal CustomUserDetails currentUser) {
-        ApiResponse<BusinessResponseDTO> response = businessService.getMyBusiness(currentUser);
-        return ResponseEntity.status(response.getCode()).body(response);
+        return ResponseEntity.ok(
+                businessService.getMyBusiness(currentUser)
+        );
     }
 
     @GetMapping
     @PreAuthorize("hasAuthority('READ_ALL_BUSINESSES')")
     public ResponseEntity<ApiResponse<List<BusinessResponseDTO>>> getAllBusinesses() {
-        ApiResponse<List<BusinessResponseDTO>> response = businessService.getAllBusinesses();
-        return ResponseEntity.status(response.getCode()).body(response);
+        return ResponseEntity.ok(
+                businessService.getAllBusinesses()
+        );
     }
 
     @GetMapping("/{businessId}")
     @PreAuthorize("hasAuthority('READ_ALL_BUSINESSES')")
-    public ResponseEntity<ApiResponse<BusinessResponseDTO>> getBusinessById(@PathVariable Long businessId) {
-        ApiResponse<BusinessResponseDTO> response = businessService.getBusinessById(businessId);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<BusinessResponseDTO>> getBusinessById(
+            @PathVariable Long businessId)
+    {
+        return ResponseEntity.ok(
+                businessService.getBusinessById(businessId)
+        );
+    }
+
+    @PutMapping("/status/{businessId}")
+    @PreAuthorize("hasAuthority('UPDATE_BUSINESS_STATUS')")
+    public ResponseEntity<ApiResponse<BusinessResponseDTO>> updateBusinessValidationStatus(
+            @PathVariable Long businessId,
+            @Valid @RequestBody ValidateBusinessRequestDTO request
+    ) {
+        return ResponseEntity.ok(
+                businessService.updateBusinessValidationStatus(businessId, request.validationStatus())
+        );
     }
 }

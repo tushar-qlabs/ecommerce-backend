@@ -1,4 +1,4 @@
-package dev.tushar.ecommerceapi.service;
+package dev.tushar.ecommerceapi.service.impl;
 
 import dev.tushar.ecommerceapi.dto.request.AddressRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.UserUpdateRequestDTO;
@@ -11,6 +11,7 @@ import dev.tushar.ecommerceapi.exception.UserNotFoundException;
 import dev.tushar.ecommerceapi.repository.AddressRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
+import dev.tushar.ecommerceapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;

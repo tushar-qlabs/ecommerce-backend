@@ -23,9 +23,10 @@ public enum PermissionKey {
     UPDATE_SELLER_ORDERS("Allows a seller to update the status of their orders."),
 
     // --- Administrative Permissions ---
-    READ_ALL_USERS("Allows an admin to retrieve a list of all users in the system."),
-    MANAGE_ROLES("Allows an admin to create, delete, and manage roles and permissions."),
-    READ_ALL_BUSINESSES("Allows an admin to retrieve a list of all businesses."); // <-- New Permission
+    READ_ALL_USERS("Allows privileged users to retrieve a list of all users in the system."),
+    MANAGE_ROLES("Allows privileged users to create, delete, and manage roles and permissions."),
+    READ_ALL_BUSINESSES("Allows privileged users to retrieve a list of all businesses."),
+    UPDATE_BUSINESS_STATUS("Allows privileged users to update the validation status of businesses.");
 
     private final String description;
 

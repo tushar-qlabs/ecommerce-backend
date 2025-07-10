@@ -28,8 +28,15 @@ public class GlobalExceptionHandler {
     // Handle EmailOrPhoneAlreadyExistsException: If the email or phone already exists
     @ExceptionHandler(EmailOrPhoneAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<?>> handleEmailOrPhoneAlreadyExists(EmailOrPhoneAlreadyExistsException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                ApiResponse.error(e.getTitle(), e.getMessage(), HttpStatus.CONFLICT.value())
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
+                ApiResponse.error(e.getTitle(), e.getMessage(), HttpStatus.ACCEPTED.value())
+        );
+    }
+
+    @ExceptionHandler(BusinessAlreadyExistException.class)
+    public ResponseEntity<ApiResponse<?>> handleBusinessAlreadyExist(BusinessAlreadyExistException e) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
+                ApiResponse.error("Registration Failed", e.getMessage(), HttpStatus.ACCEPTED.value())
         );
     }
 
@@ -53,6 +60,21 @@ public class GlobalExceptionHandler {
                 ));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ApiResponse.error("Validation Error", errors, HttpStatus.BAD_REQUEST.value())
+        );
+    }
+
+    // -- Generic Exception Handler -- //
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<?>> handleConflictException(ConflictException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ApiResponse.error(e.getMessage(), null, HttpStatus.CONFLICT.value())
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<?>> handleGenericException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse.error("Internal Server Error", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value())
         );
     }
 }

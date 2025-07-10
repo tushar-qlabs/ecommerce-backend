@@ -6,9 +6,11 @@ import dev.tushar.ecommerceapi.dto.request.RegisterRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.LoginResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.RegisterResponseDTO;
 import dev.tushar.ecommerceapi.entity.Role;
+import dev.tushar.ecommerceapi.entity.Permission;
 import dev.tushar.ecommerceapi.entity.User;
 import dev.tushar.ecommerceapi.exception.EmailOrPhoneAlreadyExistsException;
 import dev.tushar.ecommerceapi.exception.UserNotFoundException;
+import dev.tushar.ecommerceapi.repository.PermissionRepository;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
@@ -32,6 +34,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
@@ -44,6 +47,8 @@ public class AuthService {
 
         Role customerRole = roleRepository.findByName("CUSTOMER")
                 .orElseThrow(() -> new RuntimeException("Error: CUSTOMER role not found."));
+        Permission createBusinessPermission = permissionRepository.findByName("CREATE_BUSINESS")
+                .orElseThrow(() -> new RuntimeException("Error: CREATE_BUSINESS permission not found."));
 
         var user = User.builder()
                 .firstName(request.getFirstname())
@@ -51,6 +56,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .roles(Set.of(customerRole))
+                .permissions(Set.of(createBusinessPermission))
                 .build();
 
         user = userRepository.save(user);
@@ -62,7 +68,7 @@ public class AuthService {
                         user.getLastName(),
                         user.getEmail()
                 ),
-                HttpStatus.CREATED.value()
+                HttpStatus.OK.value()
         );
     }
 
