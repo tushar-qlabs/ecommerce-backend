@@ -62,11 +62,13 @@ public class User {
     )
     private Set<Address> addresses = new HashSet<>();
 
+    @SuppressWarnings("OneToOneWithLazy")
     @ToString.Exclude
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Business business;
 
 }
+
 
 /*
     mappedBy points to the field in the other entity that owns the relationship —
