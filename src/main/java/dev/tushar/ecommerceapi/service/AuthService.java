@@ -8,8 +8,7 @@ import dev.tushar.ecommerceapi.dto.response.RegisterResponseDTO;
 import dev.tushar.ecommerceapi.entity.Role;
 import dev.tushar.ecommerceapi.entity.Permission;
 import dev.tushar.ecommerceapi.entity.User;
-import dev.tushar.ecommerceapi.exception.EmailOrPhoneAlreadyExistsException;
-import dev.tushar.ecommerceapi.exception.UserNotFoundException;
+import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.repository.PermissionRepository;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
@@ -42,14 +41,23 @@ public class AuthService {
     public ApiResponse<RegisterResponseDTO> register(RegisterRequestDTO request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw EmailOrPhoneAlreadyExistsException.forEmail("Registration Failed", request.getEmail());
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "An account with the email " + request.getEmail() + " already exists."
+            );
         }
 
         Role customerRole = roleRepository.findByName("CUSTOMER")
-                .orElseThrow(() -> new RuntimeException("Error: CUSTOMER role not found."));
-        Permission createBusinessPermission = permissionRepository.findByName("CREATE_BUSINESS")
-                .orElseThrow(() -> new RuntimeException("Error: CREATE_BUSINESS permission not found."));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Server configuration error: The 'CUSTOMER' role is missing."
+                ));
 
+        Permission createBusinessPermission = permissionRepository.findByName("CREATE_BUSINESS")
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Server configuration error: The 'CREATE_BUSINESS' permission is missing."
+                ));
         var user = User.builder()
                 .firstName(request.getFirstname())
                 .lastName(request.getLastname())
@@ -83,7 +91,10 @@ public class AuthService {
         );
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException(request.getEmail()));
+                .orElseThrow(() -> new ApiException(
+                HttpStatus.NOT_FOUND,
+                "The user with ID " + request.getEmail() + " could not be found."
+        ));
 
         String jwtToken = jwtUtil.generateToken(new CustomUserDetails(user));
 
