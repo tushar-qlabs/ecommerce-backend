@@ -4,6 +4,8 @@ package dev.tushar.ecommerceapi.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "businesses")
 @Getter
@@ -33,9 +35,9 @@ public class Business {
     @Column(nullable = false)
     private String verificationStatus; // Pending, Approved, Rejected
 
-//    @ToString.Exclude
-//    @OneToMany(mappedBy = "business", fetch = FetchType.LAZY)
-//    private Set<Product> products;
+    @ToString.Exclude
+    @OneToMany(mappedBy = "business", fetch = FetchType.LAZY)
+    private Set<Product> products;
 
 }
 
