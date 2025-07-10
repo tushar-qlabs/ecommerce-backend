@@ -30,9 +30,10 @@ public class Business {
     @Column(nullable = false)
     private String verificationStatus;
 
-}
-
-
 //    @ToString.Exclude
 //    @OneToMany(mappedBy = "business", fetch = FetchType.LAZY)
 //    private Set<Product> products;
+
+}
+
+

@@ -5,12 +5,10 @@ import lombok.Getter;
 @Getter
 public enum PermissionKey {
     // --- User Profile Permissions ---
-//    READ_MY_PROFILE("Allows a user to retrieve their own profile information."),
     UPDATE_MY_PROFILE("Allows a user to update their own profile information."),
 
     // --- Business Management Permissions (for Sellers) ---
     CREATE_BUSINESS("Allows a user to register as a business account."),
-    READ_MY_BUSINESS("Allows a user to retrieve their own business account details."),
 
     // --- Product Catalog Permissions ---
     READ_PRODUCTS("Allows any user to browse and view public product listings."),
@@ -26,7 +24,8 @@ public enum PermissionKey {
 
     // --- Administrative Permissions ---
     READ_ALL_USERS("Allows an admin to retrieve a list of all users in the system."),
-    MANAGE_ROLES("Allows an admin to create, delete, and manage roles and permissions.");
+    MANAGE_ROLES("Allows an admin to create, delete, and manage roles and permissions."),
+    READ_ALL_BUSINESSES("Allows an admin to retrieve a list of all businesses."); // <-- New Permission
 
     private final String description;
 
