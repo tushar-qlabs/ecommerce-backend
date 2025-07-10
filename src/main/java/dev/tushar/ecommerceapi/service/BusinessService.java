@@ -7,10 +7,13 @@ import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import java.util.List;
 
 public interface BusinessService {
+
+    // Current user operations
     ApiResponse<BusinessResponseDTO> registerBusiness(CustomUserDetails currentUser, BusinessRegistrationRequestDTO request);
     ApiResponse<BusinessResponseDTO> getMyBusiness(CustomUserDetails currentUser);
 
-    // --- Admin Methods ---
+    // Admin user operations
     ApiResponse<List<BusinessResponseDTO>> getAllBusinesses();
     ApiResponse<BusinessResponseDTO> getBusinessById(Long businessId);
+    ApiResponse<BusinessResponseDTO> updateBusinessValidationStatus(Long businessId, String status);
 }

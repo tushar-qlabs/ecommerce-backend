@@ -1,9 +1,11 @@
 package dev.tushar.ecommerceapi.config;
 
+import dev.tushar.ecommerceapi.entity.Business;
 import dev.tushar.ecommerceapi.entity.Permission;
 import dev.tushar.ecommerceapi.entity.Role;
 import dev.tushar.ecommerceapi.entity.User;
 import dev.tushar.ecommerceapi.model.PermissionKey;
+import dev.tushar.ecommerceapi.repository.BusinessRepository;
 import dev.tushar.ecommerceapi.repository.PermissionRepository;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
@@ -24,6 +26,7 @@ public class SeedDataLoader implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -37,15 +40,11 @@ public class SeedDataLoader implements CommandLineRunner {
 
         // --- Create Role-Permission Mappings ---
         createRoleIfNotFound("CUSTOMER", Set.of(
-                UPDATE_MY_PROFILE,
-                READ_PRODUCTS, CREATE_ORDERS, READ_MY_ORDERS
+                UPDATE_MY_PROFILE, CREATE_ORDERS
         ));
         createRoleIfNotFound("SELLER", Set.of(
-                UPDATE_MY_PROFILE,
-                READ_PRODUCTS, CREATE_ORDERS, READ_MY_ORDERS,
-                CREATE_BUSINESS, READ_MY_BUSINESS,
-                CREATE_PRODUCTS, UPDATE_PRODUCTS, DELETE_PRODUCTS,
-                READ_SELLER_ORDERS, UPDATE_SELLER_ORDERS
+                UPDATE_MY_PROFILE, CREATE_ORDERS, UPDATE_PRODUCTS,
+                DELETE_PRODUCTS, READ_SELLER_ORDERS, UPDATE_SELLER_ORDERS
         ));
         createRoleIfNotFound("ADMIN", Set.of(PermissionKey.values()));
 
@@ -53,11 +52,9 @@ public class SeedDataLoader implements CommandLineRunner {
         createAdminUserIfNotFound();
         createSellerUserIfNotFound();
         createCustomerUserIfNotFound();
-        createHybridUserIfNotFound();
     }
 
     // --- User Creation Methods ---
-
     private void createAdminUserIfNotFound() {
         String adminEmail = "admin@ecom.in";
         if (!userRepository.existsByEmail(adminEmail)) {
@@ -85,6 +82,13 @@ public class SeedDataLoader implements CommandLineRunner {
                     .roles(Set.of(sellerRole))
                     .build();
             userRepository.save(sellerUser);
+            Business business = Business.builder()
+                            .user(sellerUser)
+                            .businessName("My Business")
+                            .businessDescription("My Business Description")
+                            .verificationStatus("VERIFIED") // If means business is already verified
+                            .build();
+            businessRepository.save(business);
         }
     }
 
@@ -92,44 +96,18 @@ public class SeedDataLoader implements CommandLineRunner {
         String customerEmail = "customer@ecom.in";
         if (!userRepository.existsByEmail(customerEmail)) {
             Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
+            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow();
             User customerUser = User.builder()
                     .firstName("Customer")
                     .lastName("User")
                     .email(customerEmail)
                     .passwordHash(passwordEncoder.encode("1234"))
                     .roles(Set.of(customerRole))
+                    .permissions(Set.of(createBusinessPermission))
                     .build();
             userRepository.save(customerUser);
         }
     }
-
-    /**
-     * Creates a user with both CUSTOMER and SELLER roles, along with extra individual
-     * permissions. This is useful when a user needs one or more specific permissions,
-     * but creating an entire role for them would be redundant. In this case, we can
-     * assign permissions directly to the user.
-     */
-    private void createHybridUserIfNotFound() {
-        String hybridEmail = "hybrid@ecom.in";
-        if (!userRepository.existsByEmail(hybridEmail)) {
-            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
-            Role sellerRole = roleRepository.findByName("SELLER").orElseThrow();
-
-            Permission readUsersPermission = permissionRepository.findByName(READ_ALL_USERS.name()).orElseThrow();
-            Permission manageRolesPermission = permissionRepository.findByName(MANAGE_ROLES.name()).orElseThrow();
-
-            User hybridUser = User.builder()
-                    .firstName("Hybrid")
-                    .lastName("User")
-                    .email(hybridEmail)
-                    .passwordHash(passwordEncoder.encode("1234"))
-                    .roles(Set.of(customerRole, sellerRole))
-                    .permissions(Set.of(readUsersPermission, manageRolesPermission))
-                    .build();
-            userRepository.save(hybridUser);
-        }
-    }
-
     // --- Helper Methods ---
 
     private void createPermissionIfNotFound(String name) {

@@ -81,11 +81,11 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @Valid @RequestBody AddressRequestDTO request) {
         AddressResponseDTO newAddress = userService.addAddress(currentUser, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(
+        return ResponseEntity.ok(
                 ApiResponse.success(
                         "Address added successfully.",
                         newAddress,
-                        HttpStatus.CREATED.value())
+                        HttpStatus.OK.value())
         );
     }
 

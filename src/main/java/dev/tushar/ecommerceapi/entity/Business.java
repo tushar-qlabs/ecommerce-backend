@@ -28,7 +28,10 @@ public class Business {
     private String businessName;
 
     @Column(nullable = false)
-    private String verificationStatus;
+    private String businessDescription;
+
+    @Column(nullable = false)
+    private String verificationStatus; // Pending, Approved, Rejected
 
 //    @ToString.Exclude
 //    @OneToMany(mappedBy = "business", fetch = FetchType.LAZY)
