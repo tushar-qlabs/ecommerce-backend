@@ -1,10 +1,10 @@
 package dev.tushar.ecommerceapi.service;
 
 import dev.tushar.ecommerceapi.dto.ApiResponse;
-import dev.tushar.ecommerceapi.dto.request.AuthenticationRequest;
-import dev.tushar.ecommerceapi.dto.request.RegisterRequest;
-import dev.tushar.ecommerceapi.dto.response.AuthResponse;
-import dev.tushar.ecommerceapi.dto.response.RegisterResponse;
+import dev.tushar.ecommerceapi.dto.request.AuthRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.RegisterRequestDTO;
+import dev.tushar.ecommerceapi.dto.response.LoginResponseDTO;
+import dev.tushar.ecommerceapi.dto.response.RegisterResponseDTO;
 import dev.tushar.ecommerceapi.entity.Role;
 import dev.tushar.ecommerceapi.entity.User;
 import dev.tushar.ecommerceapi.exception.EmailOrPhoneAlreadyExistsException;
@@ -36,7 +36,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     @Transactional
-    public ApiResponse<RegisterResponse> register(RegisterRequest request) {
+    public ApiResponse<RegisterResponseDTO> register(RegisterRequestDTO request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw EmailOrPhoneAlreadyExistsException.forEmail("Registration Failed", request.getEmail());
@@ -56,7 +56,7 @@ public class AuthService {
         user = userRepository.save(user);
         return ApiResponse.success(
                 "Registration successful.",
-                new RegisterResponse(
+                new RegisterResponseDTO(
                         user.getId(),
                         user.getFirstName(),
                         user.getLastName(),
@@ -67,7 +67,7 @@ public class AuthService {
     }
 
     @Transactional
-    public ApiResponse<AuthResponse> authenticate(AuthenticationRequest request) {
+    public ApiResponse<LoginResponseDTO> authenticate(AuthRequestDTO request) {
 
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
@@ -83,7 +83,7 @@ public class AuthService {
 
         return ApiResponse.success(
                 "Login successful.",
-                new AuthResponse(
+                new LoginResponseDTO(
                         user.getId(),
                         user.getFirstName(),
                         user.getEmail(),

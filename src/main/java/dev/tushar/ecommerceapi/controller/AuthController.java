@@ -1,9 +1,9 @@
 package dev.tushar.ecommerceapi.controller;
 
-import dev.tushar.ecommerceapi.dto.request.AuthenticationRequest;
-import dev.tushar.ecommerceapi.dto.request.RegisterRequest;
-import dev.tushar.ecommerceapi.dto.response.AuthResponse;
-import dev.tushar.ecommerceapi.dto.response.RegisterResponse;
+import dev.tushar.ecommerceapi.dto.request.AuthRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.RegisterRequestDTO;
+import dev.tushar.ecommerceapi.dto.response.LoginResponseDTO;
+import dev.tushar.ecommerceapi.dto.response.RegisterResponseDTO;
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.service.AuthService;
 import jakarta.validation.Valid;
@@ -22,15 +22,15 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<RegisterResponse>> register(
-            @RequestBody @Valid RegisterRequest request
+    public ResponseEntity<ApiResponse<RegisterResponseDTO>> register(
+            @RequestBody @Valid RegisterRequestDTO request
     ) {
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> authenticate(
-            @RequestBody @Valid AuthenticationRequest request
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> authenticate(
+            @RequestBody @Valid AuthRequestDTO request
     ) {
         return ResponseEntity.ok(authService.authenticate(request));
     }

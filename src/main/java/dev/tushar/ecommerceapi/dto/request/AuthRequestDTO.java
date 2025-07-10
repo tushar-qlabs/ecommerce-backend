@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationRequest {
+public class AuthRequestDTO {
 
     @Email(message = "Please provide a valid email address")
     @NotBlank
@@ -20,7 +20,7 @@ public class AuthenticationRequest {
 
     @Pattern(
             regexp = "^.{4,}$",
-            message = "Password must be at least 4 characters long"
+            message = "Password must be at lease 4 characters long"
     )
     @NotBlank
     private String password;
