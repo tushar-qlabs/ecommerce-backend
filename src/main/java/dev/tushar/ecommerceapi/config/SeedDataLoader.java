@@ -37,11 +37,11 @@ public class SeedDataLoader implements CommandLineRunner {
 
         // --- Create Role-Permission Mappings ---
         createRoleIfNotFound("CUSTOMER", Set.of(
-                READ_MY_PROFILE, UPDATE_MY_PROFILE,
+                UPDATE_MY_PROFILE,
                 READ_PRODUCTS, CREATE_ORDERS, READ_MY_ORDERS
         ));
         createRoleIfNotFound("SELLER", Set.of(
-                READ_MY_PROFILE, UPDATE_MY_PROFILE,
+                UPDATE_MY_PROFILE,
                 READ_PRODUCTS, CREATE_ORDERS, READ_MY_ORDERS,
                 CREATE_BUSINESS, READ_MY_BUSINESS,
                 CREATE_PRODUCTS, UPDATE_PRODUCTS, DELETE_PRODUCTS,

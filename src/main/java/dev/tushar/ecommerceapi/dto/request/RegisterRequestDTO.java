@@ -10,7 +10,7 @@ import org.hibernate.validator.constraints.Length;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
+public class RegisterRequestDTO {
 
     @Length(min = 3, max = 50, message = "First name must be between 3 and 50 characters long")
     @NotBlank(message = "First name is required")

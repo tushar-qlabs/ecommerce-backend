@@ -1,6 +1,6 @@
 package dev.tushar.ecommerceapi.dto.response;
 
-public record RegisterResponse(
+public record RegisterResponseDTO(
         Long id,
         String firstName,
         String lastName,
