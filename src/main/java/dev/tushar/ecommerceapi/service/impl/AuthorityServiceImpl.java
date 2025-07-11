@@ -43,7 +43,7 @@ public class AuthorityServiceImpl implements AuthorityService {
     }
 
     @Override
-    public ApiResponse<RoleResponseDTO> getRoleById(Integer roleId) {
+    public ApiResponse<RoleResponseDTO> getRoleById(Long roleId) {
         Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
                 "A role with the provided ID could not be found."
@@ -63,7 +63,7 @@ public class AuthorityServiceImpl implements AuthorityService {
     }
 
     @Override
-    public ApiResponse<RoleResponseDTO> updateRole(Integer roleId, RoleRequestDTO roleRequest) {
+    public ApiResponse<RoleResponseDTO> updateRole(Long roleId, RoleRequestDTO roleRequest) {
         Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
                 "A role with the provided ID could not be found."
@@ -76,7 +76,7 @@ public class AuthorityServiceImpl implements AuthorityService {
     }
 
     @Override
-    public ApiResponse<Void> deleteRole(Integer roleId) {
+    public ApiResponse<Void> deleteRole(Long roleId) {
         Role role = roleRepository.findById(roleId.longValue()).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
                 "A role with the provided ID could not be found."
@@ -94,7 +94,7 @@ public class AuthorityServiceImpl implements AuthorityService {
     }
 
     @Override
-    public ApiResponse<PermissionResponseDTO> getPermissionById(Integer permissionId) {
+    public ApiResponse<PermissionResponseDTO> getPermissionById(Long permissionId) {
         Permission permission = permissionRepository.findById(permissionId.longValue()).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
                 "A permission with the provided ID could not be found."

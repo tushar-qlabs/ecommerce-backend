@@ -1,6 +1,7 @@
 package dev.tushar.ecommerceapi.config;
 
 //import dev.tushar.ecommerceapi.filter.RequestLoggingFilter;
+import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomAuthenticationEntryPoint;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
@@ -9,6 +10,7 @@ import dev.tushar.ecommerceapi.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -40,7 +42,10 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByEmail(username)
                 .map(CustomUserDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "A user with ID " + username + " could not be found."
+                ));
     }
 
     @Bean
@@ -61,7 +66,11 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/demo/public").permitAll()
+                        .requestMatchers(
+                                "/auth/**",
+                                "/products/**",
+                                "/categories/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

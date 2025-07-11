@@ -42,8 +42,8 @@ public class AuthService {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(
-                    HttpStatus.CONFLICT,
-                    "An account with the email " + request.getEmail() + " already exists."
+                    HttpStatus.ACCEPTED,
+                    "An account with the provided email already exists."
             );
         }
 

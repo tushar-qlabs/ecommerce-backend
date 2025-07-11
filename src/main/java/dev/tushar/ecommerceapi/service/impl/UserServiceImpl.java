@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserResponseDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(user -> new UserResponseDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhoneNumber()))
+                .map(this::mapToUserResponseDTO)
                 .toList();
     }
 
@@ -46,8 +46,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO getCurrentUser(CustomUserDetails currentUser) {
-        User user = currentUser.user();
-        return new UserResponseDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhoneNumber());
+        return mapToUserResponseDTO(currentUser.user());
     }
 
     @Override
@@ -56,8 +55,7 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getFirstName() != null) user.setFirstName(updateRequest.getFirstName());
         if (updateRequest.getLastName() != null) user.setLastName(updateRequest.getLastName());
         if (updateRequest.getPhoneNumber() != null) user.setPhoneNumber(updateRequest.getPhoneNumber());
-        user = userRepository.save(user);
-        return new UserResponseDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhoneNumber());
+        return mapToUserResponseDTO(userRepository.save(user));
     }
 
     @Override
@@ -124,5 +122,15 @@ public class UserServiceImpl implements UserService {
             throw new AccessDeniedException("You do not have permission to access this address.");
         }
         return address;
+    }
+
+    public UserResponseDTO mapToUserResponseDTO(User user) {
+        return new UserResponseDTO(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getPhoneNumber()
+        );
     }
 }

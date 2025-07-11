@@ -51,7 +51,8 @@ public class UserController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserResponseDTO>> getCurrentUser(
-            @AuthenticationPrincipal CustomUserDetails currentUser) {
+            @AuthenticationPrincipal CustomUserDetails currentUser)
+    {
         UserResponseDTO userResponse = userService.getCurrentUser(currentUser);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -65,7 +66,8 @@ public class UserController {
     @PreAuthorize("hasAuthority('UPDATE_MY_PROFILE')")
     public ResponseEntity<ApiResponse<UserResponseDTO>> updateCurrentUser(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @Valid @RequestBody UserUpdateRequestDTO updateRequest) {
+            @Valid @RequestBody UserUpdateRequestDTO updateRequest)
+    {
         UserResponseDTO updatedUser = userService.updateCurrentUser(currentUser, updateRequest);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -79,7 +81,8 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AddressResponseDTO>> addAddress(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @Valid @RequestBody AddressRequestDTO request) {
+            @Valid @RequestBody AddressRequestDTO request)
+    {
         AddressResponseDTO newAddress = userService.addAddress(currentUser, request);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -92,7 +95,8 @@ public class UserController {
     @GetMapping("/me/addresses")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<AddressResponseDTO>>> getAllAddresses(
-            @AuthenticationPrincipal CustomUserDetails currentUser) {
+            @AuthenticationPrincipal CustomUserDetails currentUser)
+    {
         List<AddressResponseDTO> addresses = userService.getAllAddresses(currentUser);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -106,7 +110,8 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AddressResponseDTO>> getAddressById(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @PathVariable Long addressId) {
+            @PathVariable Long addressId)
+    {
         AddressResponseDTO address = userService.getAddressById(currentUser, addressId);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -121,7 +126,8 @@ public class UserController {
     public ResponseEntity<ApiResponse<AddressResponseDTO>> updateAddress(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Long addressId,
-            @Valid @RequestBody AddressRequestDTO request) {
+            @Valid @RequestBody AddressRequestDTO request)
+    {
         AddressResponseDTO updatedAddress = userService.updateAddress(currentUser, addressId, request);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -135,7 +141,8 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Object>> deleteAddress(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @PathVariable Long addressId) {
+            @PathVariable Long addressId)
+    {
         userService.deleteAddress(currentUser, addressId);
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -145,3 +152,4 @@ public class UserController {
         );
     }
 }
+
