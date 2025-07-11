@@ -82,6 +82,9 @@ public class SeedDataLoader implements CommandLineRunner {
                     .roles(Set.of(sellerRole))
                     .build();
             userRepository.save(sellerUser);
+
+            // Business is owning side, so we have to commit the user first
+            // then only, we can create the business
             Business business = Business.builder()
                             .user(sellerUser)
                             .businessName("My Business")

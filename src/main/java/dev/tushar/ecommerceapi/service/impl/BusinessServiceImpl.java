@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ public class BusinessServiceImpl implements BusinessService {
 
         if (businessRepository.existsByUserId(user.getId())) {
             throw new ApiException(
-                    HttpStatus.CONFLICT,
+                    HttpStatus.ACCEPTED,
                     "This account already has a registered business."
             );
         }
@@ -87,12 +88,14 @@ public class BusinessServiceImpl implements BusinessService {
     public ApiResponse<BusinessResponseDTO> updateBusinessValidationStatus(Long businessId, String status) {
         VerificationStatus statusEnum;
         try {
+            // We are assuming, that status exists,
+            // if it doesn't then throw exception
             statusEnum = VerificationStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new ApiException(
                     HttpStatus.BAD_REQUEST,
                     "The provided status value is invalid.",
-                    Map.of("invalidStatus", status, "allowedValues", "[VERIFIED, REJECTED, PENDING]")
+                    Map.of("invalidStatus", status, "allowedValues ", Arrays.toString(VerificationStatus.values()))
             );
         }
 
@@ -131,8 +134,7 @@ public class BusinessServiceImpl implements BusinessService {
                 HttpStatus.OK.value());
     }
 
-
-    // Should have used MapStruct instead of this manual shit.
+    // Should have used MapStruct instead of this manual mapping.
     private BusinessResponseDTO mapToBusinessResponseDTO(Business business) {
         return new BusinessResponseDTO(
                 business.getId(),

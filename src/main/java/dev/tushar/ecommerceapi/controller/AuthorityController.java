@@ -29,51 +29,55 @@ public class AuthorityController {
     @GetMapping("/roles")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
     public ResponseEntity<ApiResponse<List<RoleResponseDTO>>> getRoles() {
-        ApiResponse<List<RoleResponseDTO>> response = authorityService.getAllRoles();
-        return ResponseEntity.status(response.getCode()).body(response);
+        return ResponseEntity.ok(authorityService.getAllRoles());
     }
 
     @PostMapping("/roles")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
-    public ResponseEntity<ApiResponse<RoleResponseDTO>> addRole(@Valid @RequestBody RoleRequestDTO request) {
-        ApiResponse<RoleResponseDTO> response = authorityService.createRole(request);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<RoleResponseDTO>> addRole(
+            @Valid @RequestBody RoleRequestDTO request
+    ) {
+        return ResponseEntity.ok(authorityService.createRole(request));
     }
 
     @GetMapping("/roles/{id}")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
-    public ResponseEntity<ApiResponse<RoleResponseDTO>> getRoleById(@PathVariable Integer id) {
-        ApiResponse<RoleResponseDTO> response = authorityService.getRoleById(id);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<RoleResponseDTO>> getRoleById(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(authorityService.getRoleById(id));
     }
 
     @PutMapping("/roles/{id}")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
-    public ResponseEntity<ApiResponse<RoleResponseDTO>> updateRole(@PathVariable Integer id, @Valid @RequestBody RoleRequestDTO request) {
-        ApiResponse<RoleResponseDTO> response = authorityService.updateRole(id, request);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<RoleResponseDTO>> updateRole(
+            @PathVariable Long id,
+            @Valid @RequestBody RoleRequestDTO request
+    ) {
+        return ResponseEntity.ok(authorityService.updateRole(id, request));
     }
 
     @DeleteMapping("/roles/{id}")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
-    public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable Integer id) {
-        ApiResponse<Void> response = authorityService.deleteRole(id);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<Void>> deleteRole(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(authorityService.deleteRole(id));
     }
 
     // --- Permission Endpoints ---
     @GetMapping("/permissions")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
-    public ResponseEntity<ApiResponse<List<PermissionResponseDTO>>> getPermissions() {
-        ApiResponse<List<PermissionResponseDTO>> response = authorityService.getAllPermissions();
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<List<PermissionResponseDTO>>> getPermissions() {;
+        return ResponseEntity.ok(authorityService.getAllPermissions());
     }
 
     @GetMapping("/permissions/{id}")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
-    public ResponseEntity<ApiResponse<PermissionResponseDTO>> getPermissionById(@PathVariable Integer id) {
-        ApiResponse<PermissionResponseDTO> response = authorityService.getPermissionById(id);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<PermissionResponseDTO>> getPermissionById(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(authorityService.getPermissionById(id));
     }
 
     // --- Assignment Endpoints ---
@@ -82,8 +86,7 @@ public class AuthorityController {
     public ResponseEntity<ApiResponse<Void>> updateUserRoles(
             @PathVariable Long userId,
             @Valid @RequestBody UpdateUserRolesRequestDTO request) {
-        ApiResponse<Void> response = authorityService.updateUserRoles(userId, request);
-        return ResponseEntity.status(response.getCode()).body(response);
+        return ResponseEntity.ok(authorityService.updateUserRoles(userId, request));
     }
 
     @PutMapping("/permissions/assign/{userId}")
@@ -91,22 +94,23 @@ public class AuthorityController {
     public ResponseEntity<ApiResponse<Void>> updateUserPermissions(
             @PathVariable Long userId,
             @Valid @RequestBody UpdateUserPermissionsRequestDTO request) {
-        ApiResponse<Void> response = authorityService.updateUserPermissions(userId, request);
-        return ResponseEntity.status(response.getCode()).body(response);
+        return ResponseEntity.ok(authorityService.updateUserPermissions(userId, request));
     }
 
     // --- User Authority Endpoints ---
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<UserAuthorityDetailsResponseDTO>> getMyAuthorities(@AuthenticationPrincipal CustomUserDetails currentUser) {
-        ApiResponse<UserAuthorityDetailsResponseDTO> response = authorityService.getMyAuthorities(currentUser);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<UserAuthorityDetailsResponseDTO>> getMyAuthorities(
+            @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
+        return ResponseEntity.ok(authorityService.getMyAuthorities(currentUser));
     }
 
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('MANAGE_ROLES')")
-    public ResponseEntity<ApiResponse<UserAuthorityDetailsResponseDTO>> getUserAuthorities(@PathVariable Long userId) {
-        ApiResponse<UserAuthorityDetailsResponseDTO> response = authorityService.getUserAuthorities(userId);
-        return ResponseEntity.status(response.getCode()).body(response);
+    public ResponseEntity<ApiResponse<UserAuthorityDetailsResponseDTO>> getUserAuthorities(
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(authorityService.getUserAuthorities(userId));
     }
 }

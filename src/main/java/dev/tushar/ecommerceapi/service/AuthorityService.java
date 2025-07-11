@@ -12,13 +12,13 @@ import java.util.List;
 
 public interface AuthorityService {
     ApiResponse<List<RoleResponseDTO>> getAllRoles();
-    ApiResponse<RoleResponseDTO> getRoleById(Integer roleId);
+    ApiResponse<RoleResponseDTO> getRoleById(Long roleId);
     ApiResponse<RoleResponseDTO> createRole(RoleRequestDTO roleRequest);
-    ApiResponse<RoleResponseDTO> updateRole(Integer roleId, RoleRequestDTO roleRequest);
-    ApiResponse<Void> deleteRole(Integer roleId);
+    ApiResponse<RoleResponseDTO> updateRole(Long roleId, RoleRequestDTO roleRequest);
+    ApiResponse<Void> deleteRole(Long roleId);
 
     ApiResponse<List<PermissionResponseDTO>> getAllPermissions();
-    ApiResponse<PermissionResponseDTO> getPermissionById(Integer permissionId);
+    ApiResponse<PermissionResponseDTO> getPermissionById(Long permissionId);
 
     ApiResponse<Void> updateUserRoles(Long userId, UpdateUserRolesRequestDTO request);
     ApiResponse<Void> updateUserPermissions(Long userId, UpdateUserPermissionsRequestDTO request);

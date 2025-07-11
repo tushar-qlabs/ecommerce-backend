@@ -36,10 +36,14 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = e.getFieldErrors().stream()
                 .collect(Collectors.toMap(
                         FieldError::getField,
-                        fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Invalid value",
-                        (existingValue, newValue) -> existingValue
+                        fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Invalid value"
                 ));
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation Failed", errors);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<?>> handleOtherExceptions(Exception ex) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.", ex.getMessage());
     }
 
     private ResponseEntity<ApiResponse<?>> buildErrorResponse(HttpStatus status, String message, Object errorDetails) {

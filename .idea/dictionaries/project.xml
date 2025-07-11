@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>ecommerceapi</w>
+      <w>postgre</w>
     </words>
   </dictionary>
 </component>
