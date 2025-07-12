@@ -9,7 +9,6 @@ import java.util.Set;
 @Table(
         name = "categories",
         indexes = {
-                // Adding an index to the path column will dramatically speed up subtree queries
                 @Index(name = "idx_category_path", columnList = "path")
         }
 )
@@ -25,20 +24,11 @@ public class Category {
     @Column(name = "category_id")
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
-    /**
-     * Stores the materialized path of category IDs (e.g., "1/5/12/").
-     * Top-level categories will have a path like "1/".
-     */
+    @Column
     private String path;
-
-    /**
-     * Stores the depth of the category in the hierarchy.
-     * Top-level categories are at level 0.
-     * E.g., a category with a path of "1/5/12/" will have a level of 3.
-     */
 
     @Column(nullable = false)
     private int level;
@@ -46,4 +36,7 @@ public class Category {
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @Builder.Default
     private Set<Product> products = new HashSet<>();
+
+    @Builder.Default
+    private boolean deleted = false;
 }

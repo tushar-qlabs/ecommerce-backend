@@ -26,12 +26,13 @@ public class CategoryController {
             @Valid @RequestBody CategoryRequestDTO request
     ) {
         CategoryResponseDTO newCategory = categoryService.createCategory(request);
-        return ResponseEntity.ok(
+        return new ResponseEntity<>(
                 ApiResponse.success(
                         "Category created successfully.",
                         newCategory,
-                        HttpStatus.OK.value()
-                )
+                        HttpStatus.CREATED.value()
+                ),
+                HttpStatus.CREATED
         );
     }
 
@@ -44,6 +45,45 @@ public class CategoryController {
                         categories,
                         HttpStatus.OK.value()
                 )
+        );
+    }
+
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<CategoryResponseDTO>> getCategoryById(
+            @PathVariable Long categoryId
+    ) {
+        CategoryResponseDTO category = categoryService.getCategoryById(categoryId);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Category retrieved successfully.",
+                        category,
+                        HttpStatus.OK.value())
+        );
+    }
+
+    @PutMapping("/{categoryId}")
+    @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
+    public ResponseEntity<ApiResponse<CategoryResponseDTO>> updateCategory(
+            @PathVariable Long categoryId,
+            @Valid @RequestBody CategoryRequestDTO request
+    ) {
+        CategoryResponseDTO updatedCategory = categoryService.updateCategory(categoryId, request);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Category updated successfully.",
+                        updatedCategory,
+                        HttpStatus.OK.value()
+                )
+        );
+    }
+
+    @DeleteMapping("/{categoryId}")
+    @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable Long categoryId) {
+        categoryService.deleteCategory(categoryId);
+        return ResponseEntity.ok(
+                ApiResponse.success("Category deleted successfully.",
+                        null, HttpStatus.OK.value())
         );
     }
 }
