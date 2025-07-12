@@ -1,8 +1,10 @@
 package dev.tushar.ecommerceapi.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "products")
@@ -18,20 +20,21 @@ public class Product {
     @Column(name = "product_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "business_id", nullable = false)
-    private Business business;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
     @Column(nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(length = 1000)
     private String description;
 
+    @Column(nullable = false)
+    private double price;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    // --- NEW CODE ADDED HERE ---
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    private boolean isDeleted = false;
+    private Set<ProductAttributeValue> attributes = new HashSet<>();
 }

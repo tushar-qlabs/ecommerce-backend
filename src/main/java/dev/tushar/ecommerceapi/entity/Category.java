@@ -2,6 +2,7 @@ package dev.tushar.ecommerceapi.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,4 +40,14 @@ public class Category {
 
     @Builder.Default
     private boolean deleted = false;
+
+    // --- NEW CODE ADDED HERE ---
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "category_attributes",
+            joinColumns = @JoinColumn(name = "category_id"),
+            inverseJoinColumns = @JoinColumn(name = "attribute_id")
+    )
+    @Builder.Default
+    private Set<Attribute> attributes = new HashSet<>();
 }
