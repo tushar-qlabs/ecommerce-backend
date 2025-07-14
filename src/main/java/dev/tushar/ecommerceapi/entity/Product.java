@@ -1,8 +1,10 @@
 package dev.tushar.ecommerceapi.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -31,6 +33,14 @@ public class Product {
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
+
+    @OneToMany(
+            mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<ProductVariant> variants = new ArrayList<>();
 
     @Builder.Default
     private boolean isDeleted = false;

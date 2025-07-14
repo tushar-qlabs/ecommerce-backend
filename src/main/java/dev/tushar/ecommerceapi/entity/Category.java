@@ -37,6 +37,14 @@ public class Category {
     @Builder.Default
     private Set<Product> products = new HashSet<>();
 
+    @OneToMany(
+            mappedBy = "category",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private Set<CategoryAttribute> categoryAttributes = new HashSet<>();
+
     @Builder.Default
     private boolean deleted = false;
 }
