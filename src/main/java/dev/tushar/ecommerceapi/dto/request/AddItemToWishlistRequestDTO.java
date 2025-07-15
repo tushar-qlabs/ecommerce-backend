@@ -1,8 +1,8 @@
 package dev.tushar.ecommerceapi.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record AddItemToWishlistRequestDTO(
-        @NotBlank(message = "Product Variant ID is required")
+        @NotNull(message = "Product Variant ID is required")
         Long productVariantId
 ) {}

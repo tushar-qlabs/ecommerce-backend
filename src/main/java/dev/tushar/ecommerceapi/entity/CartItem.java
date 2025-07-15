@@ -26,5 +26,5 @@ public class CartItem {
     private ProductVariant productVariant;
 
     @Column(nullable = false)
-    private int quantity;
+    private Long quantity;
 }
