@@ -34,6 +34,13 @@ public class Product {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "primary_variant_id")
+    private ProductVariant primaryVariant;
+
+    // Owning side, because it has a @JoinColumn and no mappedBy attribute
+    // Owning side always hold the foreign key.
+
     @OneToMany(
             mappedBy = "product",
             cascade = CascadeType.ALL,

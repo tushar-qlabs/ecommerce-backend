@@ -16,7 +16,14 @@ public interface ProductService {
 
     ProductResponseDTO getProductById(Long productId);
 
-    Page<ProductResponseDTO> searchProducts(String q, Set<Long> categoryIds, BigDecimal minPrice, BigDecimal maxPrice, Map<String, String> attributes, Pageable pageable);
+    Page<ProductResponseDTO> searchProducts(
+            String q, // search query
+            Set<Long> categoryIds, // category ids
+            BigDecimal minPrice, // min price
+            BigDecimal maxPrice, // max price
+            Map<String, String> attributes, // category specific attributes
+            Pageable pageable
+    );
 
     Page<ProductResponseDTO> getProductsByCategory(Long categoryId, Pageable pageable);
 }

@@ -2,7 +2,7 @@ package dev.tushar.ecommerceapi.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty; // Add this import
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
@@ -31,8 +31,8 @@ public record ProductRequestDTO(
                 @NotNull(message = "Stock quantity is required")
                 int stockQuantity,
 
-                @NotEmpty(message = "Product categoryAttributes are required")
-                Map<String, Object> attributes, // e.g., {"Size": "M", "Stretchable": true}
+                @NotEmpty(message = "Product attributes are required")
+                Map<String, Object> attributes,
 
                 List<String> imageUrls
         ) {}

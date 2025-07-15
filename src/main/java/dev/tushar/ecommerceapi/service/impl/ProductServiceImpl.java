@@ -9,10 +9,10 @@ import dev.tushar.ecommerceapi.repository.*;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.service.ProductService;
 import dev.tushar.ecommerceapi.specification.ProductSpecification;
-import dev.tushar.ecommerceapi.specification.ProductVariantSpecification;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,19 +30,15 @@ import static dev.tushar.ecommerceapi.util.MyUtils.getParentIdFromPath;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository; // We now need this
     private final BusinessRepository businessRepository;
     private final CategoryRepository categoryRepository;
-    private final ProductVariantRepository productVariantRepository;
     private final ProductSpecification productSpecification;
-    private final ProductVariantSpecification productVariantSpecification;
 
     @Override
     public ProductResponseDTO createProduct(CustomUserDetails currentUser, ProductRequestDTO request) {
-
         Business business = businessRepository.findByUserId(currentUser.user().getId())
-                .orElseThrow(() -> new ApiException(
-                        HttpStatus.FORBIDDEN, "You must have a registered business to create products.")
-                );
+                .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "You must have a registered business to create products."));
 
         if (!business.getVerificationStatus().equals("VERIFIED")) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Your business is not verified yet.");
@@ -72,39 +68,58 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
 
         product.setVariants(variants);
+        product.setPrimaryVariant(variants.get(0));
+
         Product savedProduct = productRepository.save(product);
-
-        return mapToProductResponseDTO(savedProduct);
-    }
-
-    @Override
-    public ProductResponseDTO getProductById(Long productId) {
-        Product product = productRepository.findByIdAndIsDeletedFalse(productId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Product with ID " + productId + " not found."));
-        return mapToProductResponseDTO(product);
+        return mapToFlatProductResponseDTO(savedProduct);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponseDTO> searchProducts(String q, Set<Long> categoryIds, BigDecimal minPrice, BigDecimal maxPrice, Map<String, String> attributes, Pageable pageable) {
+    public ProductResponseDTO getProductById(Long productId) {
+        Product product = productRepository.findByIdAndIsDeletedFalse(productId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Product with ID " + productId + " not found."));
+        return mapToFlatProductResponseDTO(product);
+    }
 
-        Set<Long> matchingProductIds = null;
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponseDTO> searchProducts(
+            String q,
+            Set<Long> categoryIds,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Map<String, String> attributes,
+            Pageable pageable
+    ) {
+        // First, create the specification for ProductVariant
+        Specification<ProductVariant> spec = productSpecification.withFilters(q, categoryIds, minPrice, maxPrice, attributes);
 
-        if (minPrice != null || maxPrice != null || (attributes != null && !attributes.isEmpty())) {
-            Specification<ProductVariant> variantSpec = productVariantSpecification.withFilters(minPrice, maxPrice, attributes);
-            List<ProductVariant> matchingVariants = productVariantRepository.findAll(variantSpec);
+        // Second we will fetch all matching variants without pagination first.
+        // This is necessary to ensure we only return one variant per product.
+        List<ProductVariant> allMatchingVariants = productVariantRepository.findAll(spec, pageable.getSort());
 
-            if (matchingVariants.isEmpty()) {
-                return Page.empty(pageable);
-            }
-            matchingProductIds = matchingVariants.stream()
-                    .map(variant -> variant.getProduct().getId())
-                    .collect(Collectors.toSet());
+        // Third, ensure we only have one variant per product.
+        // We use a Map with the product ID as the key to guarantee uniqueness.
+        Map<Long, ProductVariant> uniqueProductVariantsMap = new LinkedHashMap<>();
+        for (ProductVariant variant : allMatchingVariants) {
+            uniqueProductVariantsMap.putIfAbsent(variant.getProduct().getId(), variant);
         }
+        List<ProductVariant> uniqueVariantsList = new ArrayList<>(uniqueProductVariantsMap.values());
 
-        Specification<Product> finalProductSpec = productSpecification.withFilters(q, categoryIds, matchingProductIds);
+        // Fourth, we need to manually apply pagination to the unique list.
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), uniqueVariantsList.size());
+        List<ProductVariant> pageContent = (start > uniqueVariantsList.size())
+                ? Collections.emptyList()
+                : uniqueVariantsList.subList(start, end);
 
-        return productRepository.findAll(finalProductSpec, pageable).map(this::mapToProductResponseDTO);
+        // Finally we create a Page object from our manually paginated list and map to DTOs.
+        return new PageImpl<>(
+                pageContent.stream().map(this::mapVariantToProductResponseDTO).collect(Collectors.toList()),
+                pageable,
+                uniqueVariantsList.size()
+        );
     }
 
     @Override
@@ -122,7 +137,50 @@ public class ProductServiceImpl implements ProductService {
         return searchProducts(null, allCategoryIds, null, null, null, pageable);
     }
 
+    // --- Helper Methods ---
+
+    /**
+     * New mapper that creates the response from a ProductVariant.
+     * This ensures the response shows the specific variant that matched the search.
+     */
+    private ProductResponseDTO mapVariantToProductResponseDTO(ProductVariant variant) {
+        Product product = variant.getProduct();
+        Map<String, String> stringAttributes = variant.getAttributes().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+
+        return new ProductResponseDTO(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                new ProductResponseDTO.BusinessInfo(product.getBusiness().getId(), product.getBusiness().getBusinessName()),
+                new ProductResponseDTO.CategoryInfo(product.getCategory().getId(), product.getCategory().getName()),
+                variant.getId(),
+                variant.getPrice(),
+                variant.getStockQuantity(),
+                stringAttributes,
+                variant.getImageUrls()
+        );
+    }
+
+    private ProductResponseDTO mapToFlatProductResponseDTO(Product product) {
+        ProductVariant primaryVariant = product.getPrimaryVariant();
+        if (primaryVariant == null) {
+            throw new IllegalStateException("Data consistency error: Product with ID " + product.getId() + " has no primary variant set.");
+        }
+        return mapVariantToProductResponseDTO(primaryVariant);
+    }
+
+    @Transactional(readOnly = true)
     private Set<CategoryAttribute> getResolvedCategoryRules(Category category) {
+        /*
+         * This method is responsible for resolving the category rules for a given category.
+         * It starts from the leaf category and works its way up to the root category.
+         *
+         * So, suppose we  don't have any rules at Men's but have rules at Clothing
+         * then this method will return all rules from Clothing and Men's.
+         *
+         */
+
         Map<String, CategoryAttribute> effectiveRulesMap = new HashMap<>();
         Category current = category;
 
@@ -164,41 +222,5 @@ public class ProductServiceImpl implements ProductService {
                 }
             }
         }
-    }
-
-    private ProductResponseDTO mapToProductResponseDTO(Product product) {
-        ProductResponseDTO.BusinessInfo businessInfo = new ProductResponseDTO.BusinessInfo(
-                product.getBusiness().getId(),
-                product.getBusiness().getBusinessName()
-        );
-
-        ProductResponseDTO.CategoryInfo categoryInfo = new ProductResponseDTO.CategoryInfo(
-                product.getCategory().getId(),
-                product.getCategory().getName()
-        );
-
-        List<ProductResponseDTO.ProductVariantDTO> variantDTOs = product.getVariants().stream()
-                .map(variant -> {
-                    Map<String, String> stringAttributes = variant.getAttributes().entrySet().stream()
-                            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
-
-                    return new ProductResponseDTO.ProductVariantDTO(
-                            variant.getId(),
-                            variant.getPrice(),
-                            variant.getStockQuantity(),
-                            variant.getSku(),
-                            stringAttributes,
-                            variant.getImageUrls()
-                    );
-                }).collect(Collectors.toList());
-
-        return new ProductResponseDTO(
-                product.getId(),
-                product.getName(),
-                product.getDescription(),
-                businessInfo,
-                categoryInfo,
-                variantDTOs
-        );
     }
 }

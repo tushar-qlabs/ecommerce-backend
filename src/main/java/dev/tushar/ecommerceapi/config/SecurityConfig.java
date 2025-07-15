@@ -1,6 +1,5 @@
 package dev.tushar.ecommerceapi.config;
 
-//import dev.tushar.ecommerceapi.filter.RequestLoggingFilter;
 import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomAuthenticationEntryPoint;

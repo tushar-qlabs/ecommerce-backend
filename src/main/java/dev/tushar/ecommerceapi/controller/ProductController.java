@@ -5,6 +5,7 @@ import dev.tushar.ecommerceapi.dto.request.ProductRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.ProductResponseDTO;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,13 +14,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/products")
@@ -54,20 +55,24 @@ public class ProductController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam MultiValueMap<String, String> allParams,
+            HttpServletRequest request,
             Pageable pageable
     ) {
         final String ATTR_PREFIX = "attr_";
-        Map<String, String> attributes = allParams.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(ATTR_PREFIX))
-                .collect(Collectors.toMap(
-                        entry -> entry.getKey().substring(ATTR_PREFIX.length()),
-                        entry -> entry.getValue().get(0)
-                ));
+        Map<String, String> attributes = new HashMap<>();
 
-        // Convert the single categoryId to a Set to match the service layer
+        for (String paramName : Collections.list(request.getParameterNames())) {
+            if (paramName.startsWith(ATTR_PREFIX)) {
+                String attributeName = paramName.substring(ATTR_PREFIX.length());
+                String attributeValue = request.getParameter(paramName);
+                attributes.put(attributeName, attributeValue);
+            }
+        }
+
+        System.out.println("Attributes: " + attributes);
+        System.out.println(pageable);
+
         Set<Long> categoryIdSet = (categoryId != null) ? Set.of(categoryId) : null;
-
         Page<ProductResponseDTO> products = productService.searchProducts(q, categoryIdSet, minPrice, maxPrice, attributes, pageable);
         return ResponseEntity.ok(
                 ApiResponse.success("Products searched successfully.", products, HttpStatus.OK.value())

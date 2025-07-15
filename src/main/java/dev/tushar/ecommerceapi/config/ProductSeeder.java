@@ -29,7 +29,6 @@ public class ProductSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Only seed products if the repository is empty to avoid duplicates
         if (productRepository.count() == 0) {
             seedProducts();
         }
@@ -156,9 +155,6 @@ public class ProductSeeder implements CommandLineRunner {
         );
     }
 
-    /**
-     * Helper method to create a Product and its Variants more cleanly.
-     */
     private void createProduct(String name, String description, Business business, Category category, List<ProductVariant> variants) {
         Product product = Product.builder()
                 .name(name)
@@ -167,16 +163,16 @@ public class ProductSeeder implements CommandLineRunner {
                 .category(category)
                 .build();
 
-        // Link each variant back to the main product
         variants.forEach(variant -> variant.setProduct(product));
         product.setVariants(variants);
+
+        if (!variants.isEmpty()) {
+            product.setPrimaryVariant(variants.get(0));
+        }
 
         productRepository.save(product);
     }
 
-    /**
-     * Helper method to build a ProductVariant.
-     */
     private ProductVariant createVariant(BigDecimal price, int stock, Map<String, Object> attributes) {
         return ProductVariant.builder()
                 .price(price)

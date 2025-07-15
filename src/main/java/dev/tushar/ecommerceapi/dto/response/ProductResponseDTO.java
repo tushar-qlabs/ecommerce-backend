@@ -7,30 +7,18 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ProductResponseDTO(
-        Long id,
+        Long productId,
         String name,
         String description,
         BusinessInfo business,
         CategoryInfo category,
-        List<ProductVariantDTO> variants
+
+        Long variantId,
+        BigDecimal price,
+        int stockQuantity,
+        Map<String, String> attributes,
+        List<String> imageUrls
 ) {
-
-    public record BusinessInfo(
-            Long id,
-            String name
-    ) {}
-
-    public record CategoryInfo(
-            Long id,
-            String name
-    ) {}
-
-    public record ProductVariantDTO(
-            Long id,
-            BigDecimal price,
-            int stockQuantity,
-            String sku, // We don't really need it for now!
-            Map<String, String> attributes, // e.g., {"color": "Red", "size": "M"}
-            List<String> image_urls
-    ) {}
+    public record BusinessInfo(Long id, String name) {}
+    public record CategoryInfo(Long id, String name) {}
 }

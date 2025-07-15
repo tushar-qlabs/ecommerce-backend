@@ -40,7 +40,8 @@ public class AuthService {
     @Transactional
     public ApiResponse<RegisterResponseDTO> register(RegisterRequestDTO request) {
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        boolean emailExists = userRepository.existsByEmail(request.getEmail());
+        if (emailExists) {
             throw new ApiException(
                     HttpStatus.ACCEPTED,
                     "An account with the provided email already exists."
