@@ -16,9 +16,12 @@ public record ProductResponseDTO(
         Long variantId,
         BigDecimal price,
         int stockQuantity,
-        Map<String, String> attributes,
-        List<String> imageUrls
+        Map<String, String> attributes
 ) {
-    public record BusinessInfo(Long id, String name) {}
-    public record CategoryInfo(Long id, String name) {}
+    public record BusinessInfo(
+            Long id, String name
+    ) {}
+    public record CategoryInfo(
+            Long id, String name
+    ) {}
 }

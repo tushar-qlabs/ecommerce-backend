@@ -39,7 +39,4 @@ public class ProductVariant {
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> attributes;
 
-    @Type(JsonType.class)
-    @Column(name = "image_urls", columnDefinition = "jsonb")
-    private List<String> imageUrls;
 }

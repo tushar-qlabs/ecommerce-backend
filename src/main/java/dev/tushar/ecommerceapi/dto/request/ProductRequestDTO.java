@@ -32,8 +32,7 @@ public record ProductRequestDTO(
                 int stockQuantity,
 
                 @NotEmpty(message = "Product attributes are required")
-                Map<String, Object> attributes,
+                Map<String, Object> attributes
 
-                List<String> imageUrls
         ) {}
 }

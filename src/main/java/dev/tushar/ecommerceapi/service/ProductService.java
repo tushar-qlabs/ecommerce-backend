@@ -1,6 +1,7 @@
 package dev.tushar.ecommerceapi.service;
 
 import dev.tushar.ecommerceapi.dto.request.ProductRequestDTO;
+import dev.tushar.ecommerceapi.dto.response.ProductDetailResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.ProductResponseDTO;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ public interface ProductService {
 
     ProductResponseDTO createProduct(CustomUserDetails currentUser, ProductRequestDTO productRequest);
 
-    ProductResponseDTO getProductById(Long productId);
+    ProductDetailResponseDTO getProductById(Long productId);
 
     Page<ProductResponseDTO> searchProducts(
             String q, // search query

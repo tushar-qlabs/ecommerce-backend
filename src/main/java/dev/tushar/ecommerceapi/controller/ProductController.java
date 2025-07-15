@@ -2,6 +2,7 @@ package dev.tushar.ecommerceapi.controller;
 
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.ProductRequestDTO;
+import dev.tushar.ecommerceapi.dto.response.ProductDetailResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.ProductResponseDTO;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.service.ProductService;
@@ -42,8 +43,8 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<ApiResponse<ProductResponseDTO>> getProductById(@PathVariable Long productId) {
-        ProductResponseDTO product = productService.getProductById(productId);
+    public ResponseEntity<ApiResponse<ProductDetailResponseDTO>> getProductById(@PathVariable Long productId) {
+        ProductDetailResponseDTO product = productService.getProductById(productId);
         return ResponseEntity.ok(
                 ApiResponse.success("Product fetched successfully.", product, HttpStatus.OK.value())
         );
