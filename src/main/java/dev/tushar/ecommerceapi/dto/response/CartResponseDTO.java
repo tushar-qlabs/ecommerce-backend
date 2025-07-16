@@ -11,7 +11,7 @@ public record CartResponseDTO(
 ) {
     public record CartItemDetailDTO(
             Long cartItemId,
-            Long quantity,
+            Integer quantity,
             ProductResponseDTO product
     ) {}
 }

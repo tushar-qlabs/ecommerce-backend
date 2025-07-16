@@ -40,7 +40,7 @@ public class CartServiceImpl implements CartService {
     public CartResponseDTO setItemInCart(CustomUserDetails currentUser, CartItemRequestDTO request) {
         Cart cart = getOrCreateCart(currentUser.user());
         Long variantId = request.productVariantId();
-        Long quantity = request.quantity();
+        Integer quantity = request.quantity();
 
         if (quantity <= 0) {
             cartItemRepository.findByCartIdAndProductVariantId(cart.getId(), variantId)
@@ -56,7 +56,7 @@ public class CartServiceImpl implements CartService {
                             .build());
 
             item.setQuantity(quantity);
-            cart.getItems().add(item); // Ensures item is in the cart's collection
+            cart.getItems().add(item);
             cartItemRepository.save(item);
         }
         return mapToCartResponseDTO(getOrCreateCart(currentUser.user()));

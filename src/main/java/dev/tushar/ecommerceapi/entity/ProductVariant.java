@@ -6,7 +6,6 @@ import lombok.*;
 import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -31,7 +30,7 @@ public class ProductVariant {
     private BigDecimal price;
 
     @Column(nullable = false)
-    private int stockQuantity;
+    private Integer stockQuantity;
 
     private String sku;
 

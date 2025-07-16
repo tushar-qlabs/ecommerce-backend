@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "A user with ID " + userId + " could not be found."
+                        "A user with the provided ID could not be found."
                 ));
         return new UserResponseDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPhoneNumber());
     }
@@ -60,41 +60,68 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public AddressResponseDTO addAddress(CustomUserDetails currentUser, AddressRequestDTO request) {
-        Address address = Address.builder()
-                .label(request.label())
-                .streetLine1(request.streetLine1())
-                .streetLine2(request.streetLine2())
-                .city(request.city())
-                .state(request.state())
-                .postalCode(request.postalCode())
-                .countryCode(request.countryCode())
-                .user(currentUser.user())
-                .build();
-        address = addressRepository.save(address);
-        return new AddressResponseDTO(address.getId(), address.getLabel(), address.getStreetLine1(),
-                address.getStreetLine2(), address.getCity(), address.getState(), address.getPostalCode(), address.getCountryCode());
+        return saveAddress(currentUser, null, request);
+    }
+
+    @Override
+    public AddressResponseDTO updateAddress(CustomUserDetails currentUser, Long addressId, AddressRequestDTO request) {
+        return saveAddress(currentUser, addressId, request);
     }
 
     @Override
     public List<AddressResponseDTO> getAllAddresses(CustomUserDetails currentUser) {
         return addressRepository.findAllByUser(currentUser.user())
                 .stream()
-                .map(address -> new AddressResponseDTO(address.getId(), address.getLabel(), address.getStreetLine1(),
-                        address.getStreetLine2(), address.getCity(), address.getState(), address.getPostalCode(), address.getCountryCode()))
+                .map(this::mapToAddressResponseDTO)
                 .toList();
     }
 
     @Override
     public AddressResponseDTO getAddressById(CustomUserDetails currentUser, Long addressId) {
         Address address = getOwnedAddress(currentUser, addressId);
-        return new AddressResponseDTO(address.getId(), address.getLabel(), address.getStreetLine1(),
-                address.getStreetLine2(), address.getCity(), address.getState(), address.getPostalCode(), address.getCountryCode());
+        return mapToAddressResponseDTO(address);
     }
 
     @Override
-    public AddressResponseDTO updateAddress(CustomUserDetails currentUser, Long addressId, AddressRequestDTO request) {
-        Address address = getOwnedAddress(currentUser, addressId);
-        address.setId(addressId);
+    public void deleteAddress(CustomUserDetails currentUser, Long addressId) {
+        Address addressToDelete = getOwnedAddress(currentUser, addressId);
+        if (addressToDelete.isDefault()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot delete the default address. Please set another address as default first.");
+        }
+        addressRepository.delete(addressToDelete);
+    }
+
+    public AddressResponseDTO saveAddress(CustomUserDetails currentUser, Long addressId, AddressRequestDTO request) {
+        User user = currentUser.user();
+        Address address;
+
+        if (addressId == null) { // We are creating a new address
+            address = new Address();
+            address.setUser(user);
+        } else { // We are updating an existing address
+            address = getOwnedAddress(currentUser, addressId);
+        }
+
+        applyRequestToAddress(address, request, user);
+
+        Address savedAddress = addressRepository.save(address);
+        return mapToAddressResponseDTO(savedAddress);
+    }
+
+    private void applyRequestToAddress(Address address, AddressRequestDTO request, User user) {
+
+        // Check if the request made to update/add the address already have
+        // the isDefault field set to true. If so, it means we need to unset
+        // other existing default address to false.
+
+        if (Boolean.TRUE.equals(request.isDefault()) && !address.isDefault()) {
+            unsetCurrentDefaultAddress(user);
+        }
+
+        if (request.isDefault() != null) {
+            address.setDefault(request.isDefault());
+        }
+
         address.setLabel(request.label());
         address.setStreetLine1(request.streetLine1());
         address.setStreetLine2(request.streetLine2());
@@ -102,14 +129,6 @@ public class UserServiceImpl implements UserService {
         address.setState(request.state());
         address.setPostalCode(request.postalCode());
         address.setCountryCode(request.countryCode());
-        address = addressRepository.save(address);
-        return new AddressResponseDTO(address.getId(), address.getLabel(), address.getStreetLine1(),
-                address.getStreetLine2(), address.getCity(), address.getState(), address.getPostalCode(), address.getCountryCode());
-    }
-
-    @Override
-    public void deleteAddress(CustomUserDetails currentUser, Long addressId) {
-        addressRepository.delete(getOwnedAddress(currentUser, addressId));
     }
 
     private Address getOwnedAddress(CustomUserDetails currentUser, Long addressId) {
@@ -122,6 +141,36 @@ public class UserServiceImpl implements UserService {
             throw new AccessDeniedException("You do not have permission to access this address.");
         }
         return address;
+    }
+
+
+    // We will get all the addresses of the user and filter it to find the
+    // address that is currently set as default.
+    // After that, we will get the first address from the filtered list.
+    // It returning optional, so we will check if present then and pass the
+    // Consumer function to make it set its default to false and save it.
+    private void unsetCurrentDefaultAddress(User user) {
+        addressRepository.findAllByUser(user).stream()
+                .filter(Address::isDefault)
+                .findFirst()
+                .ifPresent(oldDefault -> {
+                    oldDefault.setDefault(false);
+                    addressRepository.save(oldDefault);
+                });
+    }
+
+    private AddressResponseDTO mapToAddressResponseDTO(Address address) {
+        return new AddressResponseDTO(
+                address.getId(),
+                address.getLabel(),
+                address.getStreetLine1(),
+                address.getStreetLine2(),
+                address.getCity(),
+                address.getState(),
+                address.getPostalCode(),
+                address.getCountryCode(),
+                address.isDefault()
+        );
     }
 
     public UserResponseDTO mapToUserResponseDTO(User user) {

@@ -48,4 +48,8 @@ public class Address {
 
     @Column(nullable = false)
     private String countryCode;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isDefault = false;
 }

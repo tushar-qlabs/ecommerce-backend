@@ -7,7 +7,6 @@ import dev.tushar.ecommerceapi.dto.response.UserResponseDTO;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 
 import java.util.List;
-import java.util.Set;
 
 public interface UserService {
 

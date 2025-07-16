@@ -8,5 +8,6 @@ public record AddressResponseDTO(
         String city,
         String state,
         String postalCode,
-        String countryCode
+        String countryCode,
+        boolean isDefault
 ) {}

@@ -30,5 +30,7 @@ public record AddressRequestDTO(
 
         @NotBlank(message = "Country Code is required")
         @Size(min = 2, max = 2, message = "Country Code must be 2 characters")
-        String countryCode
+        String countryCode,
+
+        Boolean isDefault
 ) {}
