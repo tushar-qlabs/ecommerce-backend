@@ -19,7 +19,6 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- This is the missing property that needs to be defined -->
         <hibernate.version>6.6.0.Final</hibernate.version>
     </properties>
 

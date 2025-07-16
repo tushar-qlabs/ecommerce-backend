@@ -1,6 +1,5 @@
 package dev.tushar.ecommerceapi.service.impl;
 
-import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.BusinessRegistrationRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.BusinessResponseDTO;
 import dev.tushar.ecommerceapi.entity.Business;
@@ -33,7 +32,7 @@ public class BusinessServiceImpl implements BusinessService {
     private final RoleRepository roleRepository;
 
     @Override
-    public ApiResponse<BusinessResponseDTO> registerBusiness(CustomUserDetails currentUser, BusinessRegistrationRequestDTO request) {
+    public BusinessResponseDTO registerBusiness(CustomUserDetails currentUser, BusinessRegistrationRequestDTO request) {
         User user = currentUser.user();
 
         if (businessRepository.existsByUserId(user.getId())) {
@@ -51,45 +50,41 @@ public class BusinessServiceImpl implements BusinessService {
                 .build();
 
         Business savedBusiness = businessRepository.save(business);
-        return ApiResponse.success("Business registered successfully. Awaiting verification.", mapToBusinessResponseDTO(savedBusiness), HttpStatus.CREATED.value());
+        return mapToBusinessResponseDTO(savedBusiness);
     }
 
     @Override
-    public ApiResponse<BusinessResponseDTO> getMyBusiness(CustomUserDetails currentUser) {
+    public BusinessResponseDTO getMyBusiness(CustomUserDetails currentUser) {
         User user = currentUser.user();
         Business business = businessRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
                         "No business has been registered for this account."
                 ));
-        return ApiResponse.success("Business details fetched successfully.", mapToBusinessResponseDTO(business), HttpStatus.OK.value());
+        return mapToBusinessResponseDTO(business);
     }
 
     @Override
-    public ApiResponse<List<BusinessResponseDTO>> getAllBusinesses() {
-        List<BusinessResponseDTO> businesses = businessRepository.findAll().stream()
+    public List<BusinessResponseDTO> getAllBusinesses() {
+        return businessRepository.findAll().stream()
                 .map(this::mapToBusinessResponseDTO)
                 .collect(Collectors.toList());
-        return ApiResponse.success("All businesses fetched successfully.", businesses, HttpStatus.OK.value());
     }
 
     @Override
-    public ApiResponse<BusinessResponseDTO> getBusinessById(Long businessId) {
+    public BusinessResponseDTO getBusinessById(Long businessId) {
         Business business = businessRepository.findById(businessId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
                         "A business with ID " + businessId + " could not be found."
                 ));
-        return ApiResponse.success("Business details fetched successfully.", mapToBusinessResponseDTO(business), HttpStatus.OK.value());
+        return mapToBusinessResponseDTO(business);
     }
 
-    @Transactional
     @Override
-    public ApiResponse<BusinessResponseDTO> updateBusinessValidationStatus(Long businessId, String status) {
+    public BusinessResponseDTO updateBusinessValidationStatus(Long businessId, String status) {
         VerificationStatus statusEnum;
         try {
-            // We are assuming, that status exists,
-            // if it doesn't then throw exception
             statusEnum = VerificationStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new ApiException(
@@ -129,12 +124,9 @@ public class BusinessServiceImpl implements BusinessService {
             }
         }
 
-        return ApiResponse.success("Business validated successfully.",
-                mapToBusinessResponseDTO(savedBusiness),
-                HttpStatus.OK.value());
+        return mapToBusinessResponseDTO(savedBusiness);
     }
 
-    // Should have used MapStruct instead of this manual mapping.
     private BusinessResponseDTO mapToBusinessResponseDTO(Business business) {
         return new BusinessResponseDTO(
                 business.getId(),

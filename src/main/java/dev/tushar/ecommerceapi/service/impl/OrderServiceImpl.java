@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,16 +42,10 @@ public class OrderServiceImpl implements OrderService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Cannot create an order from an empty cart.");
         }
 
-        // We use BigDecimal to avoid floating point precision issues when adding decimal values
-        // like 0.1 + 0.2 = 0.3 instead of 0.30000000000000004 (this happens because float and double use binary representation)
-        // Additionally, we can't use '*' operator in BigDecimal; so we have to use .multiply() method
-        // Also, reduct() first argument is initial value, and second argument we're passing
-        // is something similar to BiFunction but both arguments need to be of the same type and return the same type.
         BigDecimal grandTotal = cart.getItems().stream()
                 .map(item -> item.getProductVariant().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // This is where we may need to handle payment it...
         if (!mockPaymentSuccessful) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Payment failed.");
         }
@@ -67,8 +62,15 @@ public class OrderServiceImpl implements OrderService {
             ProductVariant variant = productVariantRepository.findById(item.getProductVariant().getId())
                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Product variant not found."));
 
+            // --- THIS IS THE MODIFIED LOGIC ---
             if (variant.getStockQuantity() < item.getQuantity()) {
-                throw new ApiException(HttpStatus.CONFLICT, "Insufficient stock for product: " + variant.getProduct().getName());
+                String productName = variant.getProduct().getName();
+                String message = String.format(
+                        "Insufficient stock for product: %s. Only %d left in stock.",
+                        productName,
+                        variant.getStockQuantity()
+                );
+                throw new ApiException(HttpStatus.CONFLICT, message);
             }
         }
 

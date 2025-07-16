@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .map(CustomUserDetails::new)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "A user with ID " + username + " could not be found."
+                        "A user with provided email could not be found."
                 ));
     }
 

@@ -64,7 +64,7 @@ public class AuthSeeder implements CommandLineRunner {
                     .firstName("Admin")
                     .lastName("User")
                     .email(adminEmail)
-                    .passwordHash(passwordEncoder.encode("1234"))
+                    .passwordHash(passwordEncoder.encode("Admin/1234"))
                     .roles(Set.of(adminRole))
                     .build();
             userRepository.save(adminUser);
@@ -79,7 +79,7 @@ public class AuthSeeder implements CommandLineRunner {
                     .firstName("Seller")
                     .lastName("User")
                     .email(sellerEmail)
-                    .passwordHash(passwordEncoder.encode("1234"))
+                    .passwordHash(passwordEncoder.encode("Seller/1234"))
                     .roles(Set.of(sellerRole))
                     .build();
             userRepository.save(sellerUser);
@@ -103,7 +103,7 @@ public class AuthSeeder implements CommandLineRunner {
                     .firstName("Customer")
                     .lastName("User")
                     .email(customerEmail)
-                    .passwordHash(passwordEncoder.encode("1234"))
+                    .passwordHash(passwordEncoder.encode("Customer/1234"))
                     .roles(Set.of(customerRole))
                     .permissions(Set.of(createBusinessPermission))
                     .build();

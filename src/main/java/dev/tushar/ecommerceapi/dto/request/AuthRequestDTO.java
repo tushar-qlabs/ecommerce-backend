@@ -19,8 +19,8 @@ public class AuthRequestDTO {
     private String email;
 
     @Pattern(
-            regexp = "^.{4,}$",
-            message = "Password must be at lease 4 characters long"
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\s\\W]).{6,}$",
+            message = "Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character"
     )
     @NotBlank
     private String password;

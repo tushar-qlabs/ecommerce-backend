@@ -8,6 +8,7 @@ import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,13 +26,25 @@ public class AuthController {
     public ResponseEntity<ApiResponse<RegisterResponseDTO>> register(
             @RequestBody @Valid RegisterRequestDTO request
     ) {
-        return ResponseEntity.ok(authService.register(request));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Registration successful",
+                        authService.register(request),
+                        HttpStatus.OK.value()
+                )
+        );
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDTO>> authenticate(
             @RequestBody @Valid AuthRequestDTO request
     ) {
-        return ResponseEntity.ok(authService.authenticate(request));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Authentication successful",
+                        authService.authenticate(request),
+                        HttpStatus.OK.value()
+                )
+        );
     }
 }

@@ -38,7 +38,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     @Transactional
-    public ApiResponse<RegisterResponseDTO> register(RegisterRequestDTO request) {
+    public RegisterResponseDTO register(RegisterRequestDTO request) {
 
         boolean emailExists = userRepository.existsByEmail(request.getEmail());
         if (emailExists) {
@@ -69,20 +69,16 @@ public class AuthService {
                 .build();
 
         user = userRepository.save(user);
-        return ApiResponse.success(
-                "Registration successful.",
-                new RegisterResponseDTO(
-                        user.getId(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        user.getEmail()
-                ),
-                HttpStatus.OK.value()
+        return new RegisterResponseDTO(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail()
         );
     }
 
     @Transactional
-    public ApiResponse<LoginResponseDTO> authenticate(AuthRequestDTO request) {
+    public LoginResponseDTO authenticate(AuthRequestDTO request) {
 
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
@@ -99,9 +95,7 @@ public class AuthService {
 
         String jwtToken = jwtUtil.generateToken(new CustomUserDetails(user));
 
-        return ApiResponse.success(
-                "Login successful.",
-                new LoginResponseDTO(
+        return new LoginResponseDTO(
                         user.getId(),
                         user.getFirstName(),
                         user.getEmail(),
@@ -110,8 +104,6 @@ public class AuthService {
                                         "token", jwtToken
                                 )
                         )
-                ),
-                HttpStatus.OK.value()
         );
     }
 }

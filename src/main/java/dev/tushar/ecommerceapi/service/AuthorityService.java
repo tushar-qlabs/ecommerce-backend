@@ -1,6 +1,5 @@
 package dev.tushar.ecommerceapi.service;
 
-import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.RoleRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.UpdateUserPermissionsRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.UpdateUserRolesRequestDTO;
@@ -11,19 +10,18 @@ import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import java.util.List;
 
 public interface AuthorityService {
-    ApiResponse<List<RoleResponseDTO>> getAllRoles();
-    ApiResponse<RoleResponseDTO> getRoleById(Long roleId);
-    ApiResponse<RoleResponseDTO> createRole(RoleRequestDTO roleRequest);
-    ApiResponse<RoleResponseDTO> updateRole(Long roleId, RoleRequestDTO roleRequest);
-    ApiResponse<Void> deleteRole(Long roleId);
+    List<RoleResponseDTO> getAllRoles();
+    RoleResponseDTO getRoleById(Long roleId);
+    RoleResponseDTO createRole(RoleRequestDTO roleRequest);
+    RoleResponseDTO updateRole(Long roleId, RoleRequestDTO roleRequest);
+    void deleteRole(Long roleId);
 
-    ApiResponse<List<PermissionResponseDTO>> getAllPermissions();
-    ApiResponse<PermissionResponseDTO> getPermissionById(Long permissionId);
+    List<PermissionResponseDTO> getAllPermissions();
+    PermissionResponseDTO getPermissionById(Long permissionId);
 
-    ApiResponse<Void> updateUserRoles(Long userId, UpdateUserRolesRequestDTO request);
-    ApiResponse<Void> updateUserPermissions(Long userId, UpdateUserPermissionsRequestDTO request);
+    void updateUserRoles(Long userId, UpdateUserRolesRequestDTO request);
+    void updateUserPermissions(Long userId, UpdateUserPermissionsRequestDTO request);
 
-    // Updated to return the new, detailed DTO
-    ApiResponse<UserAuthorityDetailsResponseDTO> getMyAuthorities(CustomUserDetails currentUser);
-    ApiResponse<UserAuthorityDetailsResponseDTO> getUserAuthorities(Long userId);
+    UserAuthorityDetailsResponseDTO getMyAuthorities(CustomUserDetails currentUser);
+    UserAuthorityDetailsResponseDTO getUserAuthorities(Long userId);
 }
