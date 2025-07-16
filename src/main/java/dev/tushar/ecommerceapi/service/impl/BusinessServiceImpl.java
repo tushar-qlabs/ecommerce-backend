@@ -8,6 +8,7 @@ import dev.tushar.ecommerceapi.entity.User;
 import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.model.VerificationStatus;
 import dev.tushar.ecommerceapi.repository.BusinessRepository;
+import dev.tushar.ecommerceapi.repository.PermissionRepository;
 import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 public class BusinessServiceImpl implements BusinessService {
 
     private final BusinessRepository businessRepository;
+    private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
@@ -35,10 +38,19 @@ public class BusinessServiceImpl implements BusinessService {
     public BusinessResponseDTO registerBusiness(CustomUserDetails currentUser, BusinessRegistrationRequestDTO request) {
         User user = currentUser.user();
 
-        if (businessRepository.existsByUserId(user.getId())) {
+        Optional<Business> existingBusinessOpt = businessRepository.findByUserId(user.getId());
+
+        if (existingBusinessOpt.isPresent()) {
+            Business existingBusiness = existingBusinessOpt.get();
+            String status = existingBusiness.getVerificationStatus();
+            String message = String.format(
+                    "You have already submitted a business registration. Its current status is: %s.",
+                    status
+            );
             throw new ApiException(
-                    HttpStatus.ACCEPTED,
-                    "This account already has a registered business."
+                    HttpStatus.CONFLICT,
+                    message,
+                    Map.of("currentStatus", status)
             );
         }
 
@@ -101,17 +113,10 @@ public class BusinessServiceImpl implements BusinessService {
                 ));
 
         business.setVerificationStatus(statusEnum.name());
-        Business savedBusiness = businessRepository.save(business);
 
+        // Side effects that I want to apply when specific verification status is set
+        User user = business.getUser();
         if (statusEnum == VerificationStatus.VERIFIED) {
-            User user = savedBusiness.getUser();
-            if (user == null) {
-                throw new ApiException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Data integrity error: Business with ID " + businessId + " has no associated user."
-                );
-            }
-
             Role sellerRole = roleRepository.findByName("SELLER")
                     .orElseThrow(() -> new ApiException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -120,9 +125,17 @@ public class BusinessServiceImpl implements BusinessService {
 
             if (user.getRoles().stream().noneMatch(role -> role.getName().equals("SELLER"))) {
                 user.getRoles().add(sellerRole);
-                userRepository.save(user);
             }
+        } else if (statusEnum == VerificationStatus.SUSPENDED) {
+            user.getRoles().removeIf(role -> role.getName().equals("SELLER"));
+            permissionRepository.findByName("CREATE_BUSINESS").ifPresent(permission -> {
+                user.getPermissions().remove(permission);
+            });
         }
+
+        // Save any changes made to the user's roles or permissions
+        userRepository.save(user);
+        Business savedBusiness = businessRepository.save(business);
 
         return mapToBusinessResponseDTO(savedBusiness);
     }

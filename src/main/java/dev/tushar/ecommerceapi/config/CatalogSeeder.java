@@ -19,6 +19,7 @@ import java.util.Set;
 
 @Component
 @Order(2) // Runs second
+@Transactional
 @RequiredArgsConstructor
 public class CatalogSeeder implements CommandLineRunner {
 
@@ -27,7 +28,6 @@ public class CatalogSeeder implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
         // --- Create Common Attributes and Option Sets if they don't exist ---
         if (attributeRepository.count() == 0) {

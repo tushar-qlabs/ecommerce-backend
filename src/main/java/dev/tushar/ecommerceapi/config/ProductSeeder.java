@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Order(3) // Runs third, after security and catalog data is ready
+@Order(3) // Runs third
+@Transactional
 @RequiredArgsConstructor
 public class ProductSeeder implements CommandLineRunner {
 
@@ -27,7 +28,6 @@ public class ProductSeeder implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
         if (productRepository.count() == 0) {
             seedProducts();
@@ -36,123 +36,79 @@ public class ProductSeeder implements CommandLineRunner {
 
     private void seedProducts() {
         // --- Fetch prerequisite data created in other seeders ---
-        Business sellerBusiness = businessRepository.findByUserId(2L).orElseThrow(() -> new RuntimeException("Seller's business not found. Ensure SecuritySeeder ran correctly."));
+        Business sellerOneBusiness = businessRepository.findByUserId(2L).orElseThrow(() -> new RuntimeException("Seller 1 business not found."));
+        Business sellerTwoBusiness = businessRepository.findByUserId(3L).orElseThrow(() -> new RuntimeException("Seller 2 business not found."));
 
-        // Fetch the correct, more specific categories
-        Category mensTShirtCategory = categoryRepository.findByName("Men's T-Shirts").orElseThrow(() -> new RuntimeException("Men's T-Shirts category not found."));
-        Category mensShirtsCategory = categoryRepository.findByName("Men's Shirts").orElseThrow(() -> new RuntimeException("Men's Shirts category not found."));
-        Category mensJeansCategory = categoryRepository.findByName("Men's Jeans").orElseThrow(() -> new RuntimeException("Men's Jeans category not found."));
-        Category mensSweatersCategory = categoryRepository.findByName("Men's Sweaters").orElseThrow(() -> new RuntimeException("Men's Sweaters category not found."));
+        // Fetch clothing categories
+        Category mensTShirtCategory = categoryRepository.findByName("Men's T-Shirts").orElseThrow();
+        Category mensJeansCategory = categoryRepository.findByName("Men's Jeans").orElseThrow();
 
-        // --- Product 1: Classic Cotton T-Shirt ---
+        // --- Create a new category for electronics for Seller 2 ---
+        Category electronicsCategory = createCategoryIfNotExists("Electronics", 0, null);
+        Category phonesCategory = createCategoryIfNotExists("Smartphones", 1, electronicsCategory);
+        Category laptopsCategory = createCategoryIfNotExists("Laptops", 1, electronicsCategory);
+
+
+        // --- Products for Seller 1: Fashion Fusion ---
         createProduct(
                 "Classic Cotton T-Shirt",
-                "A comfortable and stylish T-Shirt made from 100% premium cotton. Perfect for everyday wear.",
-                sellerBusiness, mensTShirtCategory,
+                "A comfortable and stylish T-Shirt made from 100% premium cotton.",
+                sellerOneBusiness, mensTShirtCategory,
                 List.of(
                         createVariant(new BigDecimal("499.00"), 100, Map.of("Color", "#000000", "Material", "Cotton", "Size", "M", "Stretchable", true, "Style", "Casual")),
                         createVariant(new BigDecimal("549.00"), 80, Map.of("Color", "#FFFFFF", "Material", "Cotton", "Size", "L", "Stretchable", true, "Style", "Casual"))
                 )
         );
 
-        // --- Product 2: Sporty Polo T-Shirt ---
-        createProduct(
-                "Sporty Polo T-Shirt",
-                "A breathable polo t-shirt made with a polyester blend, ideal for sports or casual outings.",
-                sellerBusiness, mensTShirtCategory,
-                List.of(
-                        createVariant(new BigDecimal("799.00"), 120, Map.of("Color", "#0000FF", "Material", "Polyester", "Size", "M", "Stretchable", false, "Style", "Sporty")),
-                        createVariant(new BigDecimal("799.00"), 95, Map.of("Color", "#FF0000", "Material", "Polyester", "Size", "L", "Stretchable", false, "Style", "Sporty"))
-                )
-        );
-
-        // --- Product 3: Slim-Fit Denim Jeans ---
         createProduct(
                 "Slim-Fit Denim Jeans",
-                "Modern slim-fit jeans made from stretchable denim for maximum comfort and style.",
-                sellerBusiness, mensJeansCategory,
+                "Modern slim-fit jeans made from stretchable denim for maximum comfort.",
+                sellerOneBusiness, mensJeansCategory,
                 List.of(
-                        createVariant(new BigDecimal("1499.00"), 60, Map.of("Color", "#00008B", "Material", "Denim", "Size", "M", "Stretchable", true, "Style", "Casual")),
-                        createVariant(new BigDecimal("1499.00"), 50, Map.of("Color", "#00008B", "Material", "Denim", "Size", "L", "Stretchable", true, "Style", "Casual"))
+                        createVariant(new BigDecimal("1499.00"), 60, Map.of("Color", "#00008B", "Material", "Denim", "Size", "M", "Stretchable", true, "Style", "Casual"))
                 )
         );
 
-        // --- Product 4: Formal Business Shirt ---
+        // --- Products for Seller 2: Digital Haven ---
         createProduct(
-                "Formal Business Shirt",
-                "A classic formal shirt, non-stretch, perfect for the office or business meetings. Made from pure cotton.",
-                sellerBusiness, mensShirtsCategory,
+                "Pixel Pro 10",
+                "The latest flagship smartphone with a stunning display and pro-grade camera system.",
+                sellerTwoBusiness, phonesCategory,
                 List.of(
-                        createVariant(new BigDecimal("1299.00"), 70, Map.of("Color", "#ADD8E6", "Material", "Cotton", "Size", "M", "Style", "Business")),
-                        createVariant(new BigDecimal("1349.00"), 45, Map.of("Color", "#FFFFFF", "Material", "Cotton", "Size", "XL", "Style", "Business"))
+                        createVariant(new BigDecimal("79999.00"), 50, Map.of("Color", "#E0E0E0", "Storage", "128GB")),
+                        createVariant(new BigDecimal("89999.00"), 30, Map.of("Color", "#333333", "Storage", "256GB"))
                 )
         );
 
-        // --- Product 5: Woolen Winter Sweater ---
         createProduct(
-                "Woolen Winter Sweater",
-                "A warm and cozy sweater crafted from the finest wool. A winter wardrobe essential.",
-                sellerBusiness, mensSweatersCategory,
+                "UltraBook X1",
+                "A lightweight and powerful laptop for professionals on the go. Features a 14-inch display.",
+                sellerTwoBusiness, laptopsCategory,
                 List.of(
-                        createVariant(new BigDecimal("1999.00"), 40, Map.of("Color", "#808080", "Material", "Wool", "Size", "L", "Style", "Casual")),
-                        createVariant(new BigDecimal("1999.00"), 30, Map.of("Color", "#A52A2A", "Material", "Wool", "Size", "XL", "Style", "Casual"))
+                        createVariant(new BigDecimal("95000.00"), 25, Map.of("RAM", "16GB", "Storage", "512GB SSD")),
+                        createVariant(new BigDecimal("115000.00"), 15, Map.of("RAM", "32GB", "Storage", "1TB SSD"))
                 )
         );
 
-        // --- Product 6: Luxury Silk Party Shirt ---
         createProduct(
-                "Luxury Silk Party Shirt",
-                "An elegant and shiny shirt made from pure silk, perfect for parties and special occasions.",
-                sellerBusiness, mensShirtsCategory,
+                "Gaming Beast G9",
+                "Dominate the competition with this high-performance gaming laptop.",
+                sellerTwoBusiness, laptopsCategory,
                 List.of(
-                        createVariant(new BigDecimal("2499.00"), 25, Map.of("Color", "#FFD700", "Material", "Silk", "Size", "M", "Style", "Party")),
-                        createVariant(new BigDecimal("2599.00"), 20, Map.of("Color", "#C0C0C0", "Material", "Silk", "Size", "L", "Style", "Party"))
+                        createVariant(new BigDecimal("145000.00"), 20, Map.of("RAM", "16GB", "GPU", "RTX 4070"))
                 )
         );
+    }
 
-        // --- Product 7: V-Neck T-Shirt ---
-        createProduct(
-                "V-Neck Cotton T-Shirt",
-                "A stylish V-neck t-shirt that offers a different look from the classic round-neck.",
-                sellerBusiness, mensTShirtCategory,
-                List.of(
-                        createVariant(new BigDecimal("599.00"), 110, Map.of("Color", "#006400", "Material", "Cotton", "Size", "S", "Stretchable", true, "Style", "Casual")),
-                        createVariant(new BigDecimal("599.00"), 90, Map.of("Color", "#800080", "Material", "Cotton", "Size", "M", "Stretchable", true, "Style", "Casual"))
-                )
-        );
-
-        // --- Product 8: Ripped Denim Jeans ---
-        createProduct(
-                "Ripped Denim Jeans",
-                "Fashion-forward ripped jeans for a modern, casual style. Made with comfortable stretch denim.",
-                sellerBusiness, mensJeansCategory,
-                List.of(
-                        createVariant(new BigDecimal("1799.00"), 55, Map.of("Color", "#4682B4", "Material", "Denim", "Size", "M", "Stretchable", true, "Style", "Casual")),
-                        createVariant(new BigDecimal("1799.00"), 40, Map.of("Color", "#000000", "Material", "Denim", "Size", "L", "Stretchable", true, "Style", "Casual"))
-                )
-        );
-
-        // --- Product 9: Linen Summer Shirt ---
-        createProduct(
-                "Linen Summer Shirt",
-                "A lightweight and breathable shirt made from linen, perfect for staying cool in the summer heat.",
-                sellerBusiness, mensShirtsCategory,
-                List.of(
-                        createVariant(new BigDecimal("1199.00"), 80, Map.of("Color", "#F5F5DC", "Material", "Linen", "Size", "L", "Style", "Casual")),
-                        createVariant(new BigDecimal("1199.00"), 65, Map.of("Color", "#E0FFFF", "Material", "Linen", "Size", "XL", "Style", "Casual"))
-                )
-        );
-
-        // --- Product 10: Graphic Print T-Shirt ---
-        createProduct(
-                "Graphic Print T-Shirt",
-                "Express yourself with this cool graphic print t-shirt. Comfortable, stylish, and stretchable.",
-                sellerBusiness, mensTShirtCategory,
-                List.of(
-                        createVariant(new BigDecimal("899.00"), 150, Map.of("Color", "#36454F", "Material", "Cotton", "Size", "M", "Stretchable", true, "Style", "Casual")),
-                        createVariant(new BigDecimal("949.00"), 130, Map.of("Color", "#FFFFFF", "Material", "Cotton", "Size", "L", "Stretchable", true, "Style", "Casual"))
-                )
-        );
+    // Helper to create categories if they don't exist
+    private Category createCategoryIfNotExists(String name, int level, Category parent) {
+        return categoryRepository.findByName(name).orElseGet(() -> {
+            Category category = Category.builder().name(name).level(level).build();
+            Category savedCategory = categoryRepository.save(category);
+            String path = (parent != null) ? parent.getPath() + savedCategory.getId() + "/" : savedCategory.getId() + "/";
+            savedCategory.setPath(path);
+            return categoryRepository.save(savedCategory);
+        });
     }
 
     private void createProduct(String name, String description, Business business, Category category, List<ProductVariant> variants) {
