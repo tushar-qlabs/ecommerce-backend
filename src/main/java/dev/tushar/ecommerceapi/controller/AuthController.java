@@ -1,11 +1,14 @@
 package dev.tushar.ecommerceapi.controller;
 
 import dev.tushar.ecommerceapi.dto.request.AuthRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.RefreshTokenRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.RegisterRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.LoginResponseDTO;
+import dev.tushar.ecommerceapi.dto.response.RefreshTokenResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.RegisterResponseDTO;
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,14 +40,38 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDTO>> authenticate(
-            @RequestBody @Valid AuthRequestDTO request
+            @RequestBody @Valid AuthRequestDTO request,
+            HttpServletRequest httpServletRequest
     ) {
+        String ipAddress = httpServletRequest.getRemoteAddr();
+        String deviceInfo = httpServletRequest.getHeader("User-Agent");
+
+        // Not sure if this is the best way to get to this information.
+        // We can also get the IP address and device info from the request
+        // This way we can have more infrormation about the logged in users.
+
+        LoginResponseDTO loginResponse = authService.authenticate(request, ipAddress, deviceInfo);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Authentication successful",
-                        authService.authenticate(request),
+                        loginResponse,
                         HttpStatus.OK.value()
                 )
         );
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<RefreshTokenResponseDTO>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequestDTO request
+    ) {
+        RefreshTokenResponseDTO response = authService.refreshToken(request);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Tokens refreshed successfully.",
+                        response,
+                        HttpStatus.OK.value()
+                )
+        );
+    }
+
 }

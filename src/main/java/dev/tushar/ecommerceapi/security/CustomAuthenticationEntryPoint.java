@@ -27,6 +27,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException, ServletException {
+
         ApiResponse<?> apiResponse = ApiResponse.error(
                 "Authentication Failed",
                 "You are not authorized to access this resource.",

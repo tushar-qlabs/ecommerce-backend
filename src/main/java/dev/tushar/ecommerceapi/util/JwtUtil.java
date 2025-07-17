@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -13,17 +14,16 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+@Getter
 @Component
 public class JwtUtil {
 
     @Value("${jwt.secret-key}")
     private String secretKey;
 
-    @Value("${jwt.expiration-time}")
-    private long expirationTime;
+    @Value("${jwt.access-token-expiration-time}")
+    private long accessTokenExpirationTime;
 
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
@@ -40,7 +40,7 @@ public class JwtUtil {
                 .claims(extraClaims)
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expirationTime))
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationTime))
                 .signWith(getSignInKey())
                 .compact();
     }
@@ -52,21 +52,6 @@ public class JwtUtil {
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
-    }
-
-    public Set<String> extractRolesAndPermissions(String token) {
-        final Claims claims = extractAllClaims(token);
-
-        @SuppressWarnings("unchecked")
-        List<String> roles = claims.get("roles", List.class);
-
-        @SuppressWarnings("unchecked")
-        List<String> permissions = claims.get("permissions", List.class);
-
-        return Stream.concat(
-                roles != null ? roles.stream() : Stream.empty(),
-                permissions != null ? permissions.stream() : Stream.empty()
-        ).collect(Collectors.toSet());
     }
 
     // --- Private Helper Methods ---

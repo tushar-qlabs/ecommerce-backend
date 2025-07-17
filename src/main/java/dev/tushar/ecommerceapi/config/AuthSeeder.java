@@ -23,17 +23,18 @@ import static dev.tushar.ecommerceapi.model.PermissionKey.CREATE_BUSINESS;
 
 @Component
 @Order(1) // Runs first
+@Transactional
 @RequiredArgsConstructor
 public class AuthSeeder implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
-    private final PermissionRepository permissionRepository;
-    private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BusinessRepository businessRepository;
+    private final PermissionRepository permissionRepository;
+
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
         // --- Create All Permissions from the Enum ---
         for (PermissionKey p : PermissionKey.values()) {
@@ -53,9 +54,11 @@ public class AuthSeeder implements CommandLineRunner {
         // --- Create Default User Accounts ---
         createAdminUserIfNotFound();
         createSellerUserIfNotFound();
+        createSecondSellerUserIfNotFound();
         createCustomerUserIfNotFound();
     }
 
+    // THIS IS MY ADMIN USER
     private void createAdminUserIfNotFound() {
         String adminEmail = "admin@ecom.in";
         if (!userRepository.existsByEmail(adminEmail)) {
@@ -71,29 +74,63 @@ public class AuthSeeder implements CommandLineRunner {
         }
     }
 
+    // THIS IS MY FIRST SELLER USER (MOCK DATA)
     private void createSellerUserIfNotFound() {
         String sellerEmail = "seller@ecom.in";
         if (!userRepository.existsByEmail(sellerEmail)) {
             Role sellerRole = roleRepository.findByName("SELLER").orElseThrow();
+            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
+            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow();
+
             User sellerUser = User.builder()
-                    .firstName("Seller")
-                    .lastName("User")
+                    .firstName("Fashion")
+                    .lastName("Vendor")
                     .email(sellerEmail)
                     .passwordHash(passwordEncoder.encode("Seller/1234"))
-                    .roles(Set.of(sellerRole))
+                    .roles(Set.of(sellerRole, customerRole)) // This user has both SELLER and CUSTOMER roles (VERIFIED)
+                    .permissions(Set.of(createBusinessPermission))
                     .build();
             userRepository.save(sellerUser);
 
             Business business = Business.builder()
                     .user(sellerUser)
-                    .businessName("My Business")
-                    .businessDescription("My Business Description")
+                    .businessName("Fashion Fusion")
+                    .businessDescription("The best clothing and apparel.")
                     .verificationStatus("VERIFIED")
                     .build();
             businessRepository.save(business);
         }
     }
 
+    // THIS IS MY SECOND SELLER USER (MOCK DATA)
+    private void createSecondSellerUserIfNotFound() {
+        String sellerEmail = "seller2@ecom.in";
+        if (!userRepository.existsByEmail(sellerEmail)) {
+            Role sellerRole = roleRepository.findByName("SELLER").orElseThrow();
+            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
+            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow();
+
+            User sellerUser = User.builder()
+                    .firstName("Urban")
+                    .lastName("Weave")
+                    .email(sellerEmail)
+                    .passwordHash(passwordEncoder.encode("Seller2/1234"))
+                    .roles(Set.of(sellerRole, customerRole)) // This user has both SELLER and CUSTOMER roles (VERIFIED)
+                    .permissions(Set.of(createBusinessPermission))
+                    .build();
+            userRepository.save(sellerUser);
+
+            Business business = Business.builder()
+                    .user(sellerUser)
+                    .businessName("Urban Weave")
+                    .businessDescription("Latest and greatest collection of clothes.")
+                    .verificationStatus("VERIFIED")
+                    .build();
+            businessRepository.save(business);
+        }
+    }
+
+    // THIS IS MY CUSTOMER USER
     private void createCustomerUserIfNotFound() {
         String customerEmail = "customer@ecom.in";
         if (!userRepository.existsByEmail(customerEmail)) {
@@ -111,11 +148,13 @@ public class AuthSeeder implements CommandLineRunner {
         }
     }
 
+    // HERE WE CREATING THE PERMISSIONS
     private void createPermissionIfNotFound(String name) {
         permissionRepository.findByName(name)
                 .orElseGet(() -> permissionRepository.save(Permission.builder().name(name).build()));
     }
 
+    // HERE WE CREATING THE ROLES
     private void createRoleIfNotFound(String name, Set<PermissionKey> permissions) {
         roleRepository.findByName(name).orElseGet(() -> {
             Set<Permission> perms = permissions.stream()
