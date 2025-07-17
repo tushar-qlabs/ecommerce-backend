@@ -36,17 +36,14 @@ public class ProductSeeder implements CommandLineRunner {
 
     private void seedProducts() {
         // --- Fetch prerequisite data created in other seeders ---
-        Business sellerOneBusiness = businessRepository.findByUserId(2L).orElseThrow(() -> new RuntimeException("Seller 1 business not found."));
-        Business sellerTwoBusiness = businessRepository.findByUserId(3L).orElseThrow(() -> new RuntimeException("Seller 2 business not found."));
+        Business sellerOneBusiness = businessRepository.findByUserId(2L).orElseThrow(() -> new RuntimeException("Business not found."));
+        Business sellerTwoBusiness = businessRepository.findByUserId(3L).orElseThrow(() -> new RuntimeException("Business not found."));
 
         // Fetch clothing categories
         Category mensTShirtCategory = categoryRepository.findByName("Men's T-Shirts").orElseThrow();
         Category mensJeansCategory = categoryRepository.findByName("Men's Jeans").orElseThrow();
-
-        // --- Create a new category for electronics for Seller 2 ---
-        Category electronicsCategory = createCategoryIfNotExists("Electronics", 0, null);
-        Category phonesCategory = createCategoryIfNotExists("Smartphones", 1, electronicsCategory);
-        Category laptopsCategory = createCategoryIfNotExists("Laptops", 1, electronicsCategory);
+        Category womensTopsCategory = categoryRepository.findByName("Women's Tops & T-Shirts").orElseThrow();
+        Category womensDressesCategory = categoryRepository.findByName("Women's Dresses").orElseThrow();
 
 
         // --- Products for Seller 1: Fashion Fusion ---
@@ -69,46 +66,26 @@ public class ProductSeeder implements CommandLineRunner {
                 )
         );
 
-        // --- Products for Seller 2: Digital Haven ---
+        // --- Products for Seller 2: Urban Weave ---
         createProduct(
-                "Pixel Pro 10",
-                "The latest flagship smartphone with a stunning display and pro-grade camera system.",
-                sellerTwoBusiness, phonesCategory,
+                "Women's Floral Print Top",
+                "A vibrant and stylish top with a beautiful floral print, perfect for a sunny day out.",
+                sellerTwoBusiness, womensTopsCategory,
                 List.of(
-                        createVariant(new BigDecimal("79999.00"), 50, Map.of("Color", "#E0E0E0", "Storage", "128GB")),
-                        createVariant(new BigDecimal("89999.00"), 30, Map.of("Color", "#333333", "Storage", "256GB"))
+                        createVariant(new BigDecimal("799.00"), 50, Map.of("Color", "#FFC0CB", "Material", "Polyester", "Size", "S", "Stretchable", false, "Style", "Casual")),
+                        createVariant(new BigDecimal("849.00"), 30, Map.of("Color", "#ADD8E6", "Material", "Polyester", "Size", "M", "Stretchable", false, "Style", "Casual"))
                 )
         );
 
         createProduct(
-                "UltraBook X1",
-                "A lightweight and powerful laptop for professionals on the go. Features a 14-inch display.",
-                sellerTwoBusiness, laptopsCategory,
+                "Elegant Evening Dress",
+                "A stunning and elegant dress perfect for evening parties and formal events.",
+                sellerTwoBusiness, womensDressesCategory,
                 List.of(
-                        createVariant(new BigDecimal("95000.00"), 25, Map.of("RAM", "16GB", "Storage", "512GB SSD")),
-                        createVariant(new BigDecimal("115000.00"), 15, Map.of("RAM", "32GB", "Storage", "1TB SSD"))
+                        createVariant(new BigDecimal("2499.00"), 25, Map.of("Color", "#000000", "Material", "Silk", "Size", "S", "Stretchable", false, "Style", "Party")),
+                        createVariant(new BigDecimal("2599.00"), 15, Map.of("Color", "#800000", "Material", "Silk", "Size", "M", "Stretchable", false, "Style", "Party"))
                 )
         );
-
-        createProduct(
-                "Gaming Beast G9",
-                "Dominate the competition with this high-performance gaming laptop.",
-                sellerTwoBusiness, laptopsCategory,
-                List.of(
-                        createVariant(new BigDecimal("145000.00"), 20, Map.of("RAM", "16GB", "GPU", "RTX 4070"))
-                )
-        );
-    }
-
-    // Helper to create categories if they don't exist
-    private Category createCategoryIfNotExists(String name, int level, Category parent) {
-        return categoryRepository.findByName(name).orElseGet(() -> {
-            Category category = Category.builder().name(name).level(level).build();
-            Category savedCategory = categoryRepository.save(category);
-            String path = (parent != null) ? parent.getPath() + savedCategory.getId() + "/" : savedCategory.getId() + "/";
-            savedCategory.setPath(path);
-            return categoryRepository.save(savedCategory);
-        });
     }
 
     private void createProduct(String name, String description, Business business, Category category, List<ProductVariant> variants) {

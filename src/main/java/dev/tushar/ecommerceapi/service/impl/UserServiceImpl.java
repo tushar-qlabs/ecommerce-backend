@@ -1,6 +1,7 @@
 package dev.tushar.ecommerceapi.service.impl;
 
 import dev.tushar.ecommerceapi.dto.request.AddressRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.UpdatePasswordRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.UserUpdateRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.AddressResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.UserResponseDTO;
@@ -14,6 +15,7 @@ import dev.tushar.ecommerceapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<UserResponseDTO> getAllUsers() {
@@ -56,6 +59,17 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getLastName() != null) user.setLastName(updateRequest.getLastName());
         if (updateRequest.getPhoneNumber() != null) user.setPhoneNumber(updateRequest.getPhoneNumber());
         return mapToUserResponseDTO(userRepository.save(user));
+    }
+
+    @Override
+    public void updateCurrentUserPassword(CustomUserDetails currentUser, UpdatePasswordRequestDTO passwordRequest) {
+        User user = currentUser.user();
+        if (!passwordEncoder.matches(passwordRequest.oldPassword(), user.getPasswordHash())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Incorrect old password.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(passwordRequest.newPassword()));
+        userRepository.save(user);
     }
 
     @Override

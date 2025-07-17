@@ -2,11 +2,11 @@ package dev.tushar.ecommerceapi.controller;
 
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.AttributeRequestDTO;
-import dev.tushar.ecommerceapi.dto.request.OptionSetRequestDTO; // New
+import dev.tushar.ecommerceapi.dto.request.OptionSetRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.AttributeResponseDTO;
-import dev.tushar.ecommerceapi.dto.response.OptionSetResponseDTO; // New
+import dev.tushar.ecommerceapi.dto.response.OptionSetResponseDTO;
 import dev.tushar.ecommerceapi.service.AttributeService;
-import dev.tushar.ecommerceapi.service.OptionSetService; // New
+import dev.tushar.ecommerceapi.service.OptionSetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,14 +24,17 @@ public class AttributeController {
     private final AttributeService attributeService;
     private final OptionSetService optionSetService;
 
+        // --- Attribute Endpoints ---
+
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
     public ResponseEntity<ApiResponse<AttributeResponseDTO>> createAttribute(
             @Valid @RequestBody AttributeRequestDTO request
     ) {
         AttributeResponseDTO newAttribute = attributeService.createAttribute(request);
-        return ResponseEntity.ok(
-                ApiResponse.success("Attribute created successfully.", newAttribute, HttpStatus.CREATED.value())
+        return new ResponseEntity<>(
+                ApiResponse.success("Attribute created successfully.", newAttribute, HttpStatus.CREATED.value()),
+                HttpStatus.CREATED
         );
     }
 
@@ -43,14 +46,17 @@ public class AttributeController {
         );
     }
 
+    // --- Option Set Endpoints ---
+
     @PostMapping("/option-sets")
     @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
     public ResponseEntity<ApiResponse<OptionSetResponseDTO>> createOptionSet(
             @Valid @RequestBody OptionSetRequestDTO request
     ) {
-        OptionSetResponseDTO sets = optionSetService.createOptionSet(request);
-        return ResponseEntity.ok(
-                ApiResponse.success("Option set created successfully.", sets, HttpStatus.CREATED.value())
+        OptionSetResponseDTO newOptionSet = optionSetService.createOptionSet(request);
+        return new ResponseEntity<>(
+                ApiResponse.success("Option set created successfully.", newOptionSet, HttpStatus.CREATED.value()),
+                HttpStatus.CREATED
         );
     }
 

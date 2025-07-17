@@ -33,6 +33,8 @@ public class AuthSeeder implements CommandLineRunner {
     private final BusinessRepository businessRepository;
     private final PermissionRepository permissionRepository;
 
+//    @Value("")
+
 
     @Override
     public void run(String... args) throws Exception {
@@ -62,7 +64,9 @@ public class AuthSeeder implements CommandLineRunner {
     private void createAdminUserIfNotFound() {
         String adminEmail = "admin@ecom.in";
         if (!userRepository.existsByEmail(adminEmail)) {
-            Role adminRole = roleRepository.findByName("ADMIN").orElseThrow();
+            Role adminRole = roleRepository.findByName("ADMIN").orElseThrow(
+                    () -> new RuntimeException("Admin role not found")
+            );
             User adminUser = User.builder()
                     .firstName("Admin")
                     .lastName("User")
@@ -78,9 +82,15 @@ public class AuthSeeder implements CommandLineRunner {
     private void createSellerUserIfNotFound() {
         String sellerEmail = "seller@ecom.in";
         if (!userRepository.existsByEmail(sellerEmail)) {
-            Role sellerRole = roleRepository.findByName("SELLER").orElseThrow();
-            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
-            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow();
+            Role sellerRole = roleRepository.findByName("SELLER").orElseThrow(
+                    () -> new RuntimeException("Seller role not found")
+            );
+            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow(
+                    () -> new RuntimeException("Customer role not found")
+            );
+            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow(
+                    () -> new RuntimeException("Create Business permission not found")
+            );
 
             User sellerUser = User.builder()
                     .firstName("Fashion")
@@ -106,9 +116,15 @@ public class AuthSeeder implements CommandLineRunner {
     private void createSecondSellerUserIfNotFound() {
         String sellerEmail = "seller2@ecom.in";
         if (!userRepository.existsByEmail(sellerEmail)) {
-            Role sellerRole = roleRepository.findByName("SELLER").orElseThrow();
-            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
-            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow();
+            Role sellerRole = roleRepository.findByName("SELLER").orElseThrow(
+                    () -> new RuntimeException("Seller role not found")
+            );
+            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow(
+                    () -> new RuntimeException("Customer role not found")
+            );
+            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow(
+                    () -> new RuntimeException("Create Business permission not found")
+            );
 
             User sellerUser = User.builder()
                     .firstName("Urban")
@@ -134,8 +150,12 @@ public class AuthSeeder implements CommandLineRunner {
     private void createCustomerUserIfNotFound() {
         String customerEmail = "customer@ecom.in";
         if (!userRepository.existsByEmail(customerEmail)) {
-            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow();
-            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow();
+            Role customerRole = roleRepository.findByName("CUSTOMER").orElseThrow(
+                    () -> new RuntimeException("Customer role not found")
+            );
+            Permission createBusinessPermission = permissionRepository.findByName(CREATE_BUSINESS.name()).orElseThrow(
+                    () -> new RuntimeException("Create Business permission not found")
+            );
             User customerUser = User.builder()
                     .firstName("Customer")
                     .lastName("User")
@@ -158,7 +178,9 @@ public class AuthSeeder implements CommandLineRunner {
     private void createRoleIfNotFound(String name, Set<PermissionKey> permissions) {
         roleRepository.findByName(name).orElseGet(() -> {
             Set<Permission> perms = permissions.stream()
-                    .map(p -> permissionRepository.findByName(p.name()).orElseThrow())
+                    .map(p -> permissionRepository.findByName(p.name()).orElseThrow(
+                            () -> new RuntimeException("Permission not found")
+                    ))
                     .collect(Collectors.toSet());
             Role role = Role.builder().name(name).permissions(perms).build();
             return roleRepository.save(role);

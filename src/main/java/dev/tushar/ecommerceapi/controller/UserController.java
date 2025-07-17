@@ -2,6 +2,7 @@ package dev.tushar.ecommerceapi.controller;
 
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.AddressRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.UpdatePasswordRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.UserUpdateRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.AddressResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.SessionResponseDTO;
@@ -28,7 +29,7 @@ public class UserController {
     private final UserService userService;
     private final SessionService sessionService;
 
-    // == CURRENT USER PROFILE & SESSIONS ==
+    // --- Current User Profile & Sessions ---
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -78,7 +79,18 @@ public class UserController {
         );
     }
 
-    // == CURRENT USER ADDRESSES ==
+    @PutMapping("/me/password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> updateCurrentUserPassword(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @Valid @RequestBody UpdatePasswordRequestDTO passwordRequest) {
+        userService.updateCurrentUserPassword(currentUser, passwordRequest);
+        return ResponseEntity.ok(
+                ApiResponse.success("Password updated successfully.", null, HttpStatus.OK.value())
+        );
+    }
+
+    // --- Current User Addresses ---
 
     @GetMapping("/me/addresses")
     @PreAuthorize("isAuthenticated()")
@@ -150,7 +162,7 @@ public class UserController {
         );
     }
 
-    // == ADMIN USER MANAGEMENT ==
+    // --- Admin User & Management ---
 
     @GetMapping
     @PreAuthorize("hasAuthority('READ_ALL_USERS')")

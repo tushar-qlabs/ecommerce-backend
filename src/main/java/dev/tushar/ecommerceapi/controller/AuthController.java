@@ -1,12 +1,12 @@
 package dev.tushar.ecommerceapi.controller;
 
+import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.AuthRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.RefreshTokenRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.RegisterRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.LoginResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.RefreshTokenResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.RegisterResponseDTO;
-import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -29,12 +29,14 @@ public class AuthController {
     public ResponseEntity<ApiResponse<RegisterResponseDTO>> register(
             @RequestBody @Valid RegisterRequestDTO request
     ) {
-        return ResponseEntity.ok(
+        RegisterResponseDTO registeredUser = authService.register(request);
+        return new ResponseEntity<>(
                 ApiResponse.success(
                         "Registration successful",
-                        authService.register(request),
-                        HttpStatus.OK.value()
-                )
+                        registeredUser,
+                        HttpStatus.CREATED.value()
+                ),
+                HttpStatus.CREATED
         );
     }
 
@@ -47,10 +49,23 @@ public class AuthController {
         String deviceInfo = httpServletRequest.getHeader("User-Agent");
 
         // Not sure if this is the best way to get to this information.
-        // We can also get the IP address and device info from the request
-        // This way we can have more infrormation about the logged in users.
+        // But we can also get the IP address and device user agent from the request
+        // This way we can have some information.
 
         LoginResponseDTO loginResponse = authService.authenticate(request, ipAddress, deviceInfo);
+
+        // Check if the response contains active sessions, which indicates the limit was reached.
+        if (loginResponse.activeSessions() != null) {
+            return new ResponseEntity<>(
+                    ApiResponse.error(
+                            "Maximum number of active sessions reached.",
+                            loginResponse,
+                            HttpStatus.CONFLICT.value()
+                    ),
+                    HttpStatus.CONFLICT
+            );
+        }
+
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Authentication successful",
@@ -74,4 +89,17 @@ public class AuthController {
         );
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody RefreshTokenRequestDTO request
+    ) {
+        authService.logout(request);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Logout successful.",
+                        null,
+                        HttpStatus.OK.value()
+                )
+        );
+    }
 }

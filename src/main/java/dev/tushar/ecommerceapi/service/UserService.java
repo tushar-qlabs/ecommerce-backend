@@ -1,6 +1,7 @@
 package dev.tushar.ecommerceapi.service;
 
 import dev.tushar.ecommerceapi.dto.request.AddressRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.UpdatePasswordRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.UserUpdateRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.AddressResponseDTO;
 import dev.tushar.ecommerceapi.dto.response.UserResponseDTO;
@@ -17,6 +18,7 @@ public interface UserService {
     // Current user operations
     UserResponseDTO getCurrentUser(CustomUserDetails currentUser);
     UserResponseDTO updateCurrentUser(CustomUserDetails currentUser, UserUpdateRequestDTO updateRequest);
+    void updateCurrentUserPassword(CustomUserDetails currentUser, UpdatePasswordRequestDTO passwordRequest); // Add this method
 
     // Address operations for current user
     AddressResponseDTO addAddress(CustomUserDetails currentUser, AddressRequestDTO request);
