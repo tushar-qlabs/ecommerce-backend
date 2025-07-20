@@ -32,12 +32,13 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('CREATE_PRODUCTS')")
-    public ResponseEntity<ApiResponse<ProductResponseDTO>> createProduct(
+    public ResponseEntity<ApiResponse<ProductDetailResponseDTO>> createProduct(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @Valid @RequestBody ProductRequestDTO request) {
-        ProductResponseDTO newProduct = productService.createProduct(currentUser, request);
+            @Valid @RequestBody ProductRequestDTO request)
+    {
+        ProductDetailResponseDTO newProduct = productService.createProduct(currentUser, request); // Change the variable type
         return new ResponseEntity<>(
-                ApiResponse.success("Product created successfully.", newProduct, HttpStatus.CREATED.value()),
+                ApiResponse.success("Product created successfully with all variants.", newProduct, HttpStatus.CREATED.value()),
                 HttpStatus.CREATED
         );
     }

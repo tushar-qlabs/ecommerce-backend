@@ -2,6 +2,7 @@ package dev.tushar.ecommerceapi.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.tushar.ecommerceapi.dto.ApiResponse;
+import dev.tushar.ecommerceapi.service.AuthService;
 import dev.tushar.ecommerceapi.util.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -29,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final AuthService authService;
 
     @Override
     protected void doFilterInternal(
@@ -38,17 +40,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7);
         try {
-            userEmail = jwtUtil.extractUsername(jwt);
+            final String rti = jwtUtil.extractRti(jwt);
+
+            if (!authService.isSessionActive(rti)) {
+                sendErrorResponse(response, "Session has been revoked or terminated.");
+                return;
+            }
+
+            final String userEmail = jwtUtil.extractUsername(jwt);
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
@@ -58,28 +65,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             userDetails.getAuthorities()
                     );
-
-                    // This line stores the extra information related to user like ip, browser.
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    // This line is where we store all the roles and permissions of the user
-                    // for the current request
-                    // It is used internally by @PreAuthorize and @PostAuthorize annotations
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    System.out.println("Authenticated user: " + userEmail);
                 }
             }
         } catch (ExpiredJwtException e) {
-            ApiResponse<?> apiResponse = ApiResponse.error(
-                    "JWT Token has expired",
-                    null,
-                    HttpStatus.UNAUTHORIZED.value()
-            );
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            new ObjectMapper().writeValue(response.getWriter(), apiResponse);
+            sendErrorResponse(response, "JWT Token has expired");
             return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        ApiResponse<?> apiResponse = ApiResponse.error(message, null, HttpStatus.UNAUTHORIZED.value());
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        new ObjectMapper().writeValue(response.getWriter(), apiResponse);
     }
 }

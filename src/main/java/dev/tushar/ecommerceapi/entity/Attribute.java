@@ -12,11 +12,6 @@ import lombok.*;
 @AllArgsConstructor
 public class Attribute {
 
-    /*
-     * This entity is used to store all global categoryAttributes
-     * of our ecommerce application
-     */
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

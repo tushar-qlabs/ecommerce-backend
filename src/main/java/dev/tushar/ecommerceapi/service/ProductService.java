@@ -13,7 +13,7 @@ import java.util.Set;
 
 public interface ProductService {
 
-    ProductResponseDTO createProduct(CustomUserDetails currentUser, ProductRequestDTO productRequest);
+    ProductDetailResponseDTO createProduct(CustomUserDetails currentUser, ProductRequestDTO productRequest);
 
     ProductDetailResponseDTO getProductById(Long productId);
 

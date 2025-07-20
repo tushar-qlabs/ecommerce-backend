@@ -13,10 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*; // Make sure this is imported
 
 @RestController
 @RequestMapping("/auth")
@@ -48,13 +45,8 @@ public class AuthController {
         String ipAddress = httpServletRequest.getRemoteAddr();
         String deviceInfo = httpServletRequest.getHeader("User-Agent");
 
-        // Not sure if this is the best way to get to this information.
-        // But we can also get the IP address and device user agent from the request
-        // This way we can have some information.
-
         LoginResponseDTO loginResponse = authService.authenticate(request, ipAddress, deviceInfo);
 
-        // Check if the response contains active sessions, which indicates the limit was reached.
         if (loginResponse.activeSessions() != null) {
             return new ResponseEntity<>(
                     ApiResponse.error(
@@ -91,9 +83,10 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @Valid @RequestBody RefreshTokenRequestDTO request
+            @RequestHeader("Authorization") String authHeader
     ) {
-        authService.logout(request);
+        String accessToken = authHeader.substring(7);
+        authService.logout(accessToken);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Logout successful.",

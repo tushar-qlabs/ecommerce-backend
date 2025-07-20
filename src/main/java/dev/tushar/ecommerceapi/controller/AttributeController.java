@@ -24,7 +24,6 @@ public class AttributeController {
     private final AttributeService attributeService;
     private final OptionSetService optionSetService;
 
-        // --- Attribute Endpoints ---
 
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
@@ -46,7 +45,6 @@ public class AttributeController {
         );
     }
 
-    // --- Option Set Endpoints ---
 
     @PostMapping("/option-sets")
     @PreAuthorize("hasAuthority('MANAGE_CATEGORIES')")
