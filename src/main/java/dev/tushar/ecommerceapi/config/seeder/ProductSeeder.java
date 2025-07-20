@@ -1,4 +1,4 @@
-package dev.tushar.ecommerceapi.config;
+package dev.tushar.ecommerceapi.config.seeder;
 
 import dev.tushar.ecommerceapi.entity.Business;
 import dev.tushar.ecommerceapi.entity.Category;
@@ -44,6 +44,7 @@ public class ProductSeeder implements CommandLineRunner {
         Category mensJeansCategory = categoryRepository.findByName("Men's Jeans").orElseThrow();
         Category womensTopsCategory = categoryRepository.findByName("Women's Tops & T-Shirts").orElseThrow();
         Category womensDressesCategory = categoryRepository.findByName("Women's Dresses").orElseThrow();
+        Category mensShirtsCategory = categoryRepository.findByName("Men's Shirts").orElseThrow();
 
 
         // --- Products for Seller 1: Fashion Fusion ---
@@ -66,6 +67,16 @@ public class ProductSeeder implements CommandLineRunner {
                 )
         );
 
+        createProduct(
+                "Men's Casual Shirt",
+                "A stylish and comfortable casual shirt for men.",
+                sellerOneBusiness, mensShirtsCategory,
+                List.of(
+                        createVariant(new BigDecimal("999.00"), 50, Map.of("Color", "#0000FF", "Material", "Cotton", "Size", "L", "Stretchable", false, "Style", "Casual"))
+                )
+        );
+
+
         // --- Products for Seller 2: Urban Weave ---
         createProduct(
                 "Women's Floral Print Top",
@@ -84,6 +95,24 @@ public class ProductSeeder implements CommandLineRunner {
                 List.of(
                         createVariant(new BigDecimal("2499.00"), 25, Map.of("Color", "#000000", "Material", "Silk", "Size", "S", "Stretchable", false, "Style", "Party")),
                         createVariant(new BigDecimal("2599.00"), 15, Map.of("Color", "#800000", "Material", "Silk", "Size", "M", "Stretchable", false, "Style", "Party"))
+                )
+        );
+
+        createProduct(
+                "Men's Checkered Shirt",
+                "A classic checkered shirt for a smart and casual look.",
+                sellerTwoBusiness, mensShirtsCategory,
+                List.of(
+                        createVariant(new BigDecimal("1199.00"), 40, Map.of("Color", "#FF0000", "Material", "Cotton", "Size", "M", "Stretchable", false, "Style", "Casual"))
+                )
+        );
+
+        createProduct(
+                "Men's Straight-Fit Jeans",
+                "Comfortable and stylish straight-fit jeans for everyday wear.",
+                sellerTwoBusiness, mensJeansCategory,
+                List.of(
+                        createVariant(new BigDecimal("1699.00"), 70, Map.of("Color", "#000000", "Material", "Denim", "Size", "L", "Stretchable", false, "Style", "Casual"))
                 )
         );
     }

@@ -1,6 +1,7 @@
 package dev.tushar.ecommerceapi.service.impl;
 
 import dev.tushar.ecommerceapi.dto.request.BusinessRegistrationRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.BusinessUpdateRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.BusinessResponseDTO;
 import dev.tushar.ecommerceapi.entity.Business;
 import dev.tushar.ecommerceapi.entity.Role;
@@ -77,6 +78,26 @@ public class BusinessServiceImpl implements BusinessService {
     }
 
     @Override
+    public BusinessResponseDTO updateMyBusiness(CustomUserDetails currentUser, BusinessUpdateRequestDTO request) {
+        User user = currentUser.user();
+        Business business = businessRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "No business has been registered for this account."
+                ));
+
+        if (request.businessName() != null && !request.businessName().isBlank()) {
+            business.setBusinessName(request.businessName());
+        }
+        if (request.businessDescription() != null && !request.businessDescription().isBlank()) {
+            business.setBusinessDescription(request.businessDescription());
+        }
+
+        Business updatedBusiness = businessRepository.save(business);
+        return mapToBusinessResponseDTO(updatedBusiness);
+    }
+
+    @Override
     public List<BusinessResponseDTO> getAllBusinesses() {
         return businessRepository.findAll().stream()
                 .map(this::mapToBusinessResponseDTO)
@@ -114,7 +135,8 @@ public class BusinessServiceImpl implements BusinessService {
 
         business.setVerificationStatus(statusEnum.name());
 
-        // Side effects that I want to apply when specific verification status is set
+        // Side effects that I want to apply when
+        // specific verification status is set
         User user = business.getUser();
         if (statusEnum == VerificationStatus.VERIFIED) {
             Role sellerRole = roleRepository.findByName("SELLER")
@@ -133,7 +155,6 @@ public class BusinessServiceImpl implements BusinessService {
             });
         }
 
-        // Save any changes made to the user's roles or permissions
         userRepository.save(user);
         Business savedBusiness = businessRepository.save(business);
 

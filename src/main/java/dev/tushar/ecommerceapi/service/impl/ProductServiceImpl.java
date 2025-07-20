@@ -9,7 +9,7 @@ import dev.tushar.ecommerceapi.model.AttributeType;
 import dev.tushar.ecommerceapi.repository.*;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.service.ProductService;
-import dev.tushar.ecommerceapi.specification.ProductSpecification;
+import dev.tushar.ecommerceapi.specification.ProductVariantSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,13 +33,11 @@ public class ProductServiceImpl implements ProductService {
     private final ProductVariantRepository productVariantRepository;
     private final BusinessRepository businessRepository;
     private final CategoryRepository categoryRepository;
-    private final ProductSpecification productSpecification;
+    private final ProductVariantSpecification productVariantSpecification;
 
-
-    // Public API Methods
 
     @Override
-    public ProductResponseDTO createProduct(CustomUserDetails currentUser, ProductRequestDTO request) {
+    public ProductDetailResponseDTO createProduct(CustomUserDetails currentUser, ProductRequestDTO request) {
         Business business = businessRepository.findByUserId(currentUser.user().getId())
                 .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "You must have a registered business to create products."));
 
@@ -73,7 +71,7 @@ public class ProductServiceImpl implements ProductService {
         product.setPrimaryVariant(variants.get(0));
 
         Product savedProduct = productRepository.save(product);
-        return mapToFlatProductResponseDTO(savedProduct);
+        return mapToProductDetailResponseDTO(savedProduct);
     }
 
     @Override
@@ -85,6 +83,11 @@ public class ProductServiceImpl implements ProductService {
         return mapToProductDetailResponseDTO(product);
     }
 
+    /**
+     * Searches for products with filtering, including hierarchical category matching.
+     * If the search query 'q' matches a category name, this method automatically includes all
+     * products from that category and its descendants.
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponseDTO> searchProducts(
@@ -95,7 +98,38 @@ public class ProductServiceImpl implements ProductService {
             Map<String, String> attributes,
             Pageable pageable
     ) {
-        Specification<ProductVariant> spec = productSpecification.withFilters(q, categoryIds, minPrice, maxPrice, attributes);
+        // Suppose a user is searching for "Leather Bag" of brown color and want the results sorted by price in ascending order
+        // .../products/search?q=Leather+Bag&attr_Color=%23A52A2A&sort=price,asc
+
+        // For this, we will first check if we have any given set of category ids? e.g., /products/search?categoryIds=1,2,3
+        // If not, we will create a new set.
+        Set<Long> effectiveCategoryIds = (categoryIds != null) ? new HashSet<>(categoryIds) : new HashSet<>();
+
+        // Now, we will also check if the search query 'q' have any token that matches any of
+        // the category we have.
+        if (q != null && !q.isBlank()) {
+
+            // To do this, we will split the search query into tokens and check if any token
+            // matches any of the categories we have.
+            List<String> searchTokens = List.of(q.toLowerCase().split("\\s+"));
+            List<Category> matchedCategories = categoryRepository.findByNameIn(searchTokens);
+
+            // Next, we will get all the descendants of these found categories token
+            // We're already saving path in enumerated form, so it's pretty easy to do using LIKE :path%
+            for (Category matchedCategory : matchedCategories) {
+                List<Category> descendantCategories = categoryRepository.findAllByPath(matchedCategory.getPath()); // 1/2/3 -> 1/% -> [1, 2, 3]
+                descendantCategories.stream()
+                        .map(Category::getId)
+                        // after getting all the categories, we will get their
+                        // ids and add it to our main effectiveCategoryIds that will be used for query
+                        .forEach(effectiveCategoryIds::add); // Consumer<Long>
+            }
+        }
+
+        // Now, it's time to do actual searching using the effectiveCategoryIds, q, minPrice, maxPrice, and attributes
+        // For this, we will use or ProductVariantSpecification that uses criteriaBuilder to build the query dynamically
+        Specification<ProductVariant> spec = productVariantSpecification.withFilters(q, effectiveCategoryIds, minPrice, maxPrice, attributes);
+
         List<ProductVariant> allMatchingVariants = productVariantRepository.findAll(spec, pageable.getSort());
 
         Map<Long, ProductVariant> uniqueProductVariantsMap = new LinkedHashMap<>();
@@ -106,16 +140,18 @@ public class ProductServiceImpl implements ProductService {
 
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), uniqueVariantsList.size());
+
         List<ProductVariant> pageContent = (start > uniqueVariantsList.size())
                 ? Collections.emptyList()
                 : uniqueVariantsList.subList(start, end);
 
-        return new PageImpl<>(
-                pageContent.stream().map(this::mapVariantToProductResponseDTO).collect(Collectors.toList()),
-                pageable,
-                uniqueVariantsList.size()
-        );
+        List<ProductResponseDTO> dtoList = pageContent.stream()
+                .map(this::mapVariantToProductResponseDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, uniqueVariantsList.size());
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -128,7 +164,7 @@ public class ProductServiceImpl implements ProductService {
         Set<Long> allCategoryIds = allCategoriesInBranch.stream()
                 .map(Category::getId)
                 .collect(Collectors.toSet());
-
+        // We can reuse our powerful search method here.
         return searchProducts(null, allCategoryIds, null, null, null, pageable);
     }
 
@@ -176,14 +212,6 @@ public class ProductServiceImpl implements ProductService {
                 variant.getStockQuantity(),
                 stringAttributes
         );
-    }
-
-    private ProductResponseDTO mapToFlatProductResponseDTO(Product product) {
-        ProductVariant primaryVariant = product.getPrimaryVariant();
-        if (primaryVariant == null) {
-            throw new IllegalStateException("Data consistency error: Product with ID " + product.getId() + " has no primary variant set.");
-        }
-        return mapVariantToProductResponseDTO(primaryVariant);
     }
 
 

@@ -31,21 +31,21 @@ public class SessionServiceImpl implements SessionService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * This method contains the core logic for terminating a session.
-     */
+
     @Override
     public void terminateSession(User user, UUID sessionId) {
-        // Find the session by its public ID.
+        // Well here now we will find if there is any entry
+        // in refresh token table with this sessionId
+        // If yes, then Yay :D Else throw exception! :<
         RefreshToken refreshToken = refreshTokenRepository.findById(sessionId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Session not found."));
 
-        // Security Check: Verify the session belongs to the user trying to delete it.
+        // Now, verify if the session belongs to the user who trying to delete it.
         if (!refreshToken.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You do not have permission to terminate this session.");
         }
 
-        // Delete the refresh token from the database, effectively invalidating the session.
+        // Delete the refresh token from the database, invalidating the session.
         refreshTokenRepository.delete(refreshToken);
     }
 

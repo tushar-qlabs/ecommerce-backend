@@ -13,6 +13,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     List<Category> findByDeletedFalse();
 
+    List<Category> findByNameIn(List<String> names);
+
     /**
      * Finds direct, non deleted child categories based on the parent's path and the children's level.
      * This is an efficient way to check for siblings without loading all categories into memory.
@@ -31,4 +33,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      */
     @Query("SELECT c FROM Category c WHERE c.path LIKE :path%")
     List<Category> findAllByPath(@Param("path") String path);
+
+    // I did be honest! This looks trash but it works :D
 }

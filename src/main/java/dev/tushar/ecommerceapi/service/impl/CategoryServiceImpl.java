@@ -39,6 +39,15 @@ public class CategoryServiceImpl implements CategoryService {
         Category parent = null;
         int level = 0;
 
+        List<Category> allCategories = categoryRepository.findByDeletedFalse();
+        boolean isDuplicate = allCategories.stream().anyMatch(cat ->
+                cat.getName().equalsIgnoreCase(request.name()) &&
+                        Objects.equals(getParentIdFromPath(cat.getPath()), request.parentCategoryId())
+        );
+        if (isDuplicate) {
+            throw new ApiException(HttpStatus.CONFLICT, "A category with this name already exists at this level.");
+        }
+
         // We check if the provided parentCategoryId is valid
         if (request.parentCategoryId() != null) {
             parent = categoryRepository.findById(request.parentCategoryId())
@@ -204,32 +213,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private CategoryResponseDTO mapToCategoryResponseDTO(Category category, Set<CategoryResponseDTO> subCategories) {
-        Set<CategoryAttributeResponseDTO> attributes = category.getCategoryAttributes().stream()
-                .map(attr -> {
-                    List<String> options = (attr.getOptionSet() != null) ? attr.getOptionSet().getOptions() : null;
-                    return new CategoryAttributeResponseDTO(
-                            attr.getAttribute().getId(),
-                            attr.getAttribute().getName(),
-                            attr.getAttributeType(),
-                            options
-                    );
-                })
-                .collect(Collectors.toSet());
-
-        // --- New Breadcrumb Logic ---
-        List<CategoryResponseDTO.AncestorDTO> breadcrumb = new ArrayList<>();
-        if (category.getPath() != null && !category.getPath().isEmpty()) {
-            // Parse the path string (e.g., "1/2/3/") into a list of IDs
-            List<Long> ancestorIds = Arrays.stream(category.getPath().split("/"))
-                    .map(Long::parseLong)
-                    .toList();
-
-            // We will now fetch all ancestor categories
-            List<Category> ancestors = categoryRepository.findAllById(ancestorIds);
-            breadcrumb = ancestors.stream()
-                    .map(anc -> new CategoryResponseDTO.AncestorDTO(anc.getId(), anc.getName()))
-                    .toList();
-        }
+        Set<CategoryAttributeResponseDTO> attributes = mapAttributes(category);
+        List<CategoryResponseDTO.AncestorDTO> breadcrumb = buildBreadcrumb(category.getPath());
 
         return new CategoryResponseDTO(
                 category.getId(),
@@ -240,4 +225,35 @@ public class CategoryServiceImpl implements CategoryService {
                 subCategories
         );
     }
+
+    private Set<CategoryAttributeResponseDTO> mapAttributes(Category category) {
+        return category.getCategoryAttributes().stream()
+                .map(attr -> new CategoryAttributeResponseDTO(
+                        attr.getAttribute().getId(),
+                        attr.getAttribute().getName(),
+                        attr.getAttributeType(),
+                        Optional.ofNullable(attr.getOptionSet())
+                                .map(OptionSet::getOptions)
+                                .orElse(null)
+                ))
+                .collect(Collectors.toSet());
+    }
+
+    private List<CategoryResponseDTO.AncestorDTO> buildBreadcrumb(String path) {
+        if (path == null || path.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> ancestorIds = Arrays.stream(path.split("/"))
+                .filter(s -> !s.isBlank())
+                .map(Long::parseLong)
+                .toList();
+
+        List<Category> ancestors = categoryRepository.findAllById(ancestorIds);
+
+        return ancestors.stream()
+                .map(cat -> new CategoryResponseDTO.AncestorDTO(cat.getId(), cat.getName()))
+                .toList();
+    }
+
 }

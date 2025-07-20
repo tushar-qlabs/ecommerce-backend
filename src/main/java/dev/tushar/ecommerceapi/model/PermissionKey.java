@@ -6,6 +6,7 @@ import lombok.Getter;
 public enum PermissionKey {
     // --- User Profile Permissions ---
     UPDATE_MY_PROFILE("Allows a user to update their own profile information."),
+    UPDATE_MY_BUSINESS("Allows a seller to update their own business details."),
 
     // --- Business Management Permissions (for Sellers) ---
     CREATE_BUSINESS("Allows a user to register as a business account."),

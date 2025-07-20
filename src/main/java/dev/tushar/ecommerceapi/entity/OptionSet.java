@@ -17,7 +17,7 @@ import java.util.List;
 public class OptionSet {
 
     //    This table is supposed to be used only when the
-    //    attribute type is ENUMERATION
+    //    attribute type is ENUM otherwise no use! HAHA
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

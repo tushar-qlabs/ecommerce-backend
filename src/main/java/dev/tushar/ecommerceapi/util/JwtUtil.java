@@ -25,19 +25,23 @@ public class JwtUtil {
     @Value("${jwt.access-token-expiration-time}")
     private long accessTokenExpirationTime;
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    public String extractRti(String token) {
+        return extractClaim(token, claims -> claims.get("rti", String.class));
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+
+    public String generateToken(UserDetails userDetails, String rti) {
+
         CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
         User user = customUserDetails.user();
 
+        Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("userId", user.getId());
         extraClaims.put("firstName", user.getFirstName());
+        extraClaims.put("rti", rti);
 
         return Jwts.builder()
-                .claims(extraClaims)
+                .claims(extraClaims) // Use the claims map directly.
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationTime))
@@ -53,8 +57,6 @@ public class JwtUtil {
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
-
-    // --- Private Helper Methods ---
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);

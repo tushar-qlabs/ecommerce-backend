@@ -1,4 +1,4 @@
-package dev.tushar.ecommerceapi.config;
+package dev.tushar.ecommerceapi.config.seeder;
 
 import dev.tushar.ecommerceapi.entity.Attribute;
 import dev.tushar.ecommerceapi.entity.Category;

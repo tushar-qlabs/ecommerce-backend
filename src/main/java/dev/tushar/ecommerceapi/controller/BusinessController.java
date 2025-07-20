@@ -2,6 +2,7 @@ package dev.tushar.ecommerceapi.controller;
 
 import dev.tushar.ecommerceapi.dto.ApiResponse;
 import dev.tushar.ecommerceapi.dto.request.BusinessRegistrationRequestDTO;
+import dev.tushar.ecommerceapi.dto.request.BusinessUpdateRequestDTO;
 import dev.tushar.ecommerceapi.dto.request.ValidateBusinessRequestDTO;
 import dev.tushar.ecommerceapi.dto.response.BusinessResponseDTO;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
@@ -43,6 +44,18 @@ public class BusinessController {
         BusinessResponseDTO dto = businessService.getMyBusiness(currentUser);
         return ResponseEntity.ok(
                 ApiResponse.success("Business details fetched successfully.", dto, HttpStatus.OK.value())
+        );
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasAuthority('UPDATE_MY_BUSINESS')")
+    public ResponseEntity<ApiResponse<BusinessResponseDTO>> updateMyBusiness(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @Valid @RequestBody BusinessUpdateRequestDTO request) {
+
+        BusinessResponseDTO dto = businessService.updateMyBusiness(currentUser, request);
+        return ResponseEntity.ok(
+                ApiResponse.success("Business details updated successfully.", dto, HttpStatus.OK.value())
         );
     }
 

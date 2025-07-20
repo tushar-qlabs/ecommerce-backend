@@ -17,7 +17,9 @@ import dev.tushar.ecommerceapi.repository.RoleRepository;
 import dev.tushar.ecommerceapi.repository.UserRepository;
 import dev.tushar.ecommerceapi.security.CustomUserDetails;
 import dev.tushar.ecommerceapi.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,15 +27,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,6 +46,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${max-sessions}")
     private int maxSessions;
@@ -55,11 +54,12 @@ public class AuthService {
     @Value(("${refresh-token-expiration-time}"))
     private long refreshTokenExpirationTime;
 
+    private static final String SESSION_PREFIX = "session:";
+
     public RegisterResponseDTO register(RegisterRequestDTO request) {
-        boolean emailExists = userRepository.existsByEmail(request.getEmail());
-        if (emailExists) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(
-                    HttpStatus.ACCEPTED,
+                    HttpStatus.CONFLICT,
                     "An account with the provided email already exists."
             );
         }
@@ -75,7 +75,8 @@ public class AuthService {
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "Server configuration error: The 'CREATE_BUSINESS' permission is missing."
                 ));
-        var user = User.builder()
+
+        User user = User.builder()
                 .firstName(request.getFirstname())
                 .lastName(request.getLastname())
                 .email(request.getEmail())
@@ -84,7 +85,7 @@ public class AuthService {
                 .permissions(Set.of(createBusinessPermission))
                 .build();
 
-        user = userRepository.save(user);
+        userRepository.save(user);
         return new RegisterResponseDTO(
                 user.getId(),
                 user.getFirstName(),
@@ -101,6 +102,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found."));
 
+        // When a user exceeds the max session limit, they can choose an old session to invalidate.
         if (request.getSessionIdToInvalidate() != null) {
             RefreshToken tokenToInvalidate = refreshTokenRepository.findById(request.getSessionIdToInvalidate())
                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Session to invalidate not found."));
@@ -109,7 +111,11 @@ public class AuthService {
                 throw new AccessDeniedException("You do not have permission to invalidate this session.");
             }
 
+            // Then, we will invalidate the session in both Redis and the database
+            // Invalidate the redis one will restrict any future requests from the previously generated auth token
+            redisTemplate.delete(SESSION_PREFIX + tokenToInvalidate.getId().toString());
             refreshTokenRepository.delete(tokenToInvalidate);
+
             return performLogin(user, ipAddress, deviceInfo);
         }
 
@@ -127,6 +133,7 @@ public class AuthService {
                     .collect(Collectors.toList());
             return new LoginResponseDTO(sessionDetails);
         }
+
         return performLogin(user, ipAddress, deviceInfo);
     }
 
@@ -135,58 +142,89 @@ public class AuthService {
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token."));
 
         if (oldRefreshToken.getExpiryDate().isBefore(Instant.now())) {
+            redisTemplate.delete(SESSION_PREFIX + oldRefreshToken.getId().toString());
             refreshTokenRepository.delete(oldRefreshToken);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Refresh token has expired.");
         }
 
         User user = oldRefreshToken.getUser();
+
+        // Alright, time to kill the session for good.
+        // First, we yank the session from Redis. This makes the current access token instantly useless.
+        redisTemplate.delete(SESSION_PREFIX + oldRefreshToken.getId().toString());
+
+        // Then, we delete the actual refresh token from the database
+        // so they can't use it to get a new token.
         refreshTokenRepository.delete(oldRefreshToken);
 
-        String newAccessToken = jwtUtil.generateToken(new CustomUserDetails(user));
-        String newRefreshTokenString = UUID.randomUUID().toString();
-        Instant refreshTokenExpiry = Instant.now().plus(refreshTokenExpirationTime, ChronoUnit.MILLIS);
-
-        RefreshToken newRefreshToken = RefreshToken.builder()
-                .user(user)
-                .token(newRefreshTokenString)
-                .expiryDate(refreshTokenExpiry)
-                .ipAddress(oldRefreshToken.getIpAddress())
-                .deviceInfo(oldRefreshToken.getDeviceInfo())
-                .build();
-        refreshTokenRepository.save(newRefreshToken);
+        LoginResponseDTO newSession = performLogin(user, oldRefreshToken.getIpAddress(), oldRefreshToken.getDeviceInfo());
 
         return new RefreshTokenResponseDTO(
-                new HashMap<>(Map.of("token", newAccessToken, "expiresIn", jwtUtil.getAccessTokenExpirationTime())),
-                newRefreshTokenString,
-                refreshTokenExpirationTime
+                newSession.jwt(),
+                newSession.refreshToken(),
+                newSession.refreshTokenExpiresIn()
         );
     }
 
-    public void logout(RefreshTokenRequestDTO request) {
-        refreshTokenRepository.findByToken(request.refreshToken())
-                .ifPresent(refreshTokenRepository::delete);
+    public void logout(String accessToken) {
+        String rti = jwtUtil.extractRti(accessToken);
+        if (rti != null) {
+            // Invalidate the RefreshToken's ID in Redis (this will prevent any further requests from already generated auth token)
+            // It acts as a flag to indicate that the session is no longer active
+            redisTemplate.delete(SESSION_PREFIX + rti);
+
+            // Invalidate the refresh token in the database
+            // Prevent any further requests for getting the new auth token
+            refreshTokenRepository.findById(UUID.fromString(rti))
+                    .ifPresent(refreshTokenRepository::delete);
+        }
     }
 
-    private LoginResponseDTO performLogin(User user, String ipAddress, String deviceInfo) {
-        String jwtToken = jwtUtil.generateToken(new CustomUserDetails(user));
-        String refreshTokenString = UUID.randomUUID().toString();
-        Instant refreshTokenExpiry = Instant.now().plus(refreshTokenExpirationTime, ChronoUnit.MILLIS);
+    public boolean isSessionActive(String rti) {
+        if (rti == null) {
+            return false;
+        }
+        return redisTemplate.hasKey(SESSION_PREFIX + rti);
+    }
 
+    // --- Private Helper Methods ---
+
+    private LoginResponseDTO performLogin(User user, String ipAddress, String deviceInfo) {
+        // First, create and save the RefreshToken to the database to get its unique ID
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
-                .token(refreshTokenString)
-                .expiryDate(refreshTokenExpiry)
+                .token(UUID.randomUUID().toString()) // The secure random string for refreshing
+                .expiryDate(Instant.now().plus(refreshTokenExpirationTime, ChronoUnit.MILLIS))
                 .ipAddress(ipAddress)
                 .deviceInfo(deviceInfo)
                 .build();
-        refreshTokenRepository.save(refreshToken);
+        refreshToken = refreshTokenRepository.save(refreshToken);
+        UUID newRefreshTokenId = refreshToken.getId(); // This UUID is our session identifier
+
+        // Store the refresh token's UUID (which acts as our session ID) in Redis.
+        // This creates a fast, centralized record of all active user sessions.
+        // The JwtAuthenticationFilter will check for the existence of this key on every incoming request.
+        // If this key does not exist in Redis, it means the session has been terminated
+        // (e.g., via logout or session termination), and the access token must be rejected,
+        // even if it hasn't technically expired yet.
+        redisTemplate.opsForValue().set(
+                SESSION_PREFIX + newRefreshTokenId.toString(),
+                "active",
+                Duration.ofMillis(refreshTokenExpirationTime)
+        );
+
+        // Generate the JWT, embedding the session ID (rti) so it's linked to the Redis entry
+        String jwtToken = jwtUtil.generateToken(
+                new CustomUserDetails(user),
+                newRefreshTokenId.toString()
+        );
 
         return new LoginResponseDTO(
                 user.getId(),
                 user.getFirstName(),
                 user.getEmail(),
                 new HashMap<>(Map.of("token", jwtToken, "expiresIn", jwtUtil.getAccessTokenExpirationTime())),
-                refreshTokenString,
+                refreshToken.getToken(),
                 refreshTokenExpirationTime
         );
     }

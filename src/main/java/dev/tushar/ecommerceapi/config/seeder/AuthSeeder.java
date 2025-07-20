@@ -1,4 +1,4 @@
-package dev.tushar.ecommerceapi.config;
+package dev.tushar.ecommerceapi.config.seeder;
 
 import dev.tushar.ecommerceapi.entity.Business;
 import dev.tushar.ecommerceapi.entity.Permission;
@@ -33,9 +33,6 @@ public class AuthSeeder implements CommandLineRunner {
     private final BusinessRepository businessRepository;
     private final PermissionRepository permissionRepository;
 
-//    @Value("")
-
-
     @Override
     public void run(String... args) throws Exception {
         // --- Create All Permissions from the Enum ---
@@ -48,8 +45,14 @@ public class AuthSeeder implements CommandLineRunner {
                 PermissionKey.UPDATE_MY_PROFILE, PermissionKey.CREATE_ORDERS
         ));
         createRoleIfNotFound("SELLER", Set.of(
-                PermissionKey.UPDATE_MY_PROFILE, PermissionKey.CREATE_ORDERS, PermissionKey.CREATE_PRODUCTS, PermissionKey.UPDATE_PRODUCTS,
-                PermissionKey.DELETE_PRODUCTS, PermissionKey.READ_SELLER_ORDERS, PermissionKey.UPDATE_SELLER_ORDERS
+                PermissionKey.UPDATE_MY_PROFILE,
+                PermissionKey.CREATE_ORDERS,
+                PermissionKey.CREATE_PRODUCTS,
+                PermissionKey.UPDATE_PRODUCTS,
+                PermissionKey.DELETE_PRODUCTS,
+                PermissionKey.READ_SELLER_ORDERS,
+                PermissionKey.UPDATE_SELLER_ORDERS,
+                PermissionKey.UPDATE_MY_BUSINESS // Add new permission to SELLER role
         ));
         createRoleIfNotFound("ADMIN", Set.of(PermissionKey.values()));
 
