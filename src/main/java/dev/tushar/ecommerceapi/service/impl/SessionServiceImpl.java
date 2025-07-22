@@ -7,6 +7,7 @@ import dev.tushar.ecommerceapi.exception.ApiException;
 import dev.tushar.ecommerceapi.repository.RefreshTokenRepository;
 import dev.tushar.ecommerceapi.service.SessionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,10 @@ import java.util.stream.Collectors;
 @Transactional
 public class SessionServiceImpl implements SessionService {
 
+    private final StringRedisTemplate redisTemplate;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    private static final String SESSION_PREFIX = "session:";
 
     @Override
     @Transactional(readOnly = true)
@@ -44,6 +48,9 @@ public class SessionServiceImpl implements SessionService {
         if (!refreshToken.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You do not have permission to terminate this session.");
         }
+
+        // Delete the session from Redis
+        redisTemplate.delete(SESSION_PREFIX + refreshToken.getId().toString());
 
         // Delete the refresh token from the database, invalidating the session.
         refreshTokenRepository.delete(refreshToken);

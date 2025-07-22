@@ -83,11 +83,9 @@ public class ProductServiceImpl implements ProductService {
         return mapToProductDetailResponseDTO(product);
     }
 
-    /**
-     * Searches for products with filtering, including hierarchical category matching.
-     * If the search query 'q' matches a category name, this method automatically includes all
-     * products from that category and its descendants.
-     */
+    // Searches for products with filtering, including hierarchical category matching.
+    // If the search query 'q' matches a category name, this method automatically includes all
+    // products from that category and its descendants.
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponseDTO> searchProducts(
@@ -169,8 +167,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
-    // Helper Methods - Mappers
-
     private ProductDetailResponseDTO mapToProductDetailResponseDTO(Product product) {
         List<ProductDetailResponseDTO.VariantDetailDTO> variantDTOs = product.getVariants().stream()
                 .map(variant -> {
@@ -214,9 +210,6 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
-
-    // Helper Methods - Validation & Rules
-
     @Transactional(readOnly = true)
     private Set<CategoryAttribute> getResolvedCategoryRules(Category category) {
         Map<String, CategoryAttribute> effectiveRulesMap = new HashMap<>();
@@ -245,6 +238,8 @@ public class ProductServiceImpl implements ProductService {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Product attributes do not match the attributes required by the category. Required: " + requiredAttributeNames + ", but you provided " + submittedAttrs.keySet());
             }
 
+
+            // Right here!! We will validate the attributes.
             for (CategoryAttribute rule : effectiveRules) {
                 String attributeName = rule.getAttribute().getName();
                 Object attributeValue = submittedAttrs.get(attributeName);

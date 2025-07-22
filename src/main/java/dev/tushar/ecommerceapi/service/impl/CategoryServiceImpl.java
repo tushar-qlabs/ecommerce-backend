@@ -34,6 +34,9 @@ public class CategoryServiceImpl implements CategoryService {
     private final AttributeRepository attributeRepository;
     private final OptionSetRepository optionSetRepository;
 
+
+
+    // ---- CREATE CATEGORY ----
     @Override
     public CategoryResponseDTO createCategory(CategoryRequestDTO request) {
         Category parent = null;
@@ -132,6 +135,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 
 
+    // ---- UPDATE CATEGORY ----
 
     @Override
     public CategoryResponseDTO updateCategory(Long categoryId, CategoryRequestDTO request) {
@@ -149,6 +153,7 @@ public class CategoryServiceImpl implements CategoryService {
         return mapToCategoryResponseDTO(updatedCategory, buildSubCategoryHierarchy(updatedCategory, categoryRepository.findByDeletedFalse()));
     }
 
+    // ---- GET ALL CATEGORIES ----
     @Override
     public List<CategoryResponseDTO> getAllCategoriesAsHierarchy() {
         List<Category> allCategories = categoryRepository.findByDeletedFalse();
@@ -239,6 +244,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(Collectors.toSet());
     }
 
+    // Simple way to get all the breadcrumbs we can get
     private List<CategoryResponseDTO.AncestorDTO> buildBreadcrumb(String path) {
         if (path == null || path.isBlank()) {
             return Collections.emptyList();
@@ -250,7 +256,6 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
 
         List<Category> ancestors = categoryRepository.findAllById(ancestorIds);
-
         return ancestors.stream()
                 .map(cat -> new CategoryResponseDTO.AncestorDTO(cat.getId(), cat.getName()))
                 .toList();

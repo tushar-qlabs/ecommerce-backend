@@ -51,7 +51,7 @@ public class AuthService {
     @Value("${max-sessions}")
     private int maxSessions;
 
-    @Value(("${refresh-token-expiration-time}"))
+    @Value("${refresh-token-expiration-time}")
     private long refreshTokenExpirationTime;
 
     private static final String SESSION_PREFIX = "session:";

@@ -49,7 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt = authHeader.substring(7);
         try {
             final String rti = jwtUtil.extractRti(jwt);
-
             if (!authService.isSessionActive(rti)) {
                 sendErrorResponse(response, "Session has been revoked or terminated.");
                 return;

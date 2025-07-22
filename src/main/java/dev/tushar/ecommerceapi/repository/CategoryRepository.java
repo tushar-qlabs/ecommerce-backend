@@ -29,7 +29,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * Finds all descendant categories (children, grandchildren, etc.) of a given category,
      * including the category itself, based on its path.
      * E.g.,
-     * SELECT c FROM Category c WHERE c.path LIKE '1/2/3/%'
+     * SELECT c FROM Category c WHERE c.path LIKE '1/2/3/%' AND c.level = 1 AND c.deleted = false
      */
     @Query("SELECT c FROM Category c WHERE c.path LIKE :path%")
     List<Category> findAllByPath(@Param("path") String path);

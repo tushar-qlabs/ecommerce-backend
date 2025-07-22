@@ -66,6 +66,7 @@ public class ProductController {
         for (String paramName : Collections.list(request.getParameterNames())) {
             if (paramName.startsWith(ATTR_PREFIX)) {
                 String attributeName = paramName.substring(ATTR_PREFIX.length());
+                attributeName = attributeName.substring(0, 1).toUpperCase() + attributeName.substring(1);
                 String attributeValue = request.getParameter(paramName);
                 attributes.put(attributeName, attributeValue);
             }
